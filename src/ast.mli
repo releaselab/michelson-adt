@@ -1,4 +1,4 @@
-type comparable_type =
+type simp_comparable_type =
   | T_int
   | T_nat
   | T_string
@@ -8,6 +8,10 @@ type comparable_type =
   | T_key_hash
   | T_timestamp
   | T_address
+
+and comparable_type =
+  | T_simp of simp_comparable_type node
+  | T_cmp_pair of simp_comparable_type node * comparable_type node
 
 and typ =
   | T_comparable of comparable_type node
@@ -24,12 +28,16 @@ and typ =
   | T_lambda of typ node * typ node
   | T_map of comparable_type node * typ node
   | T_big_map of comparable_type node * typ node
+  | T_chain_id
 
 and inst =
   | I_seq of inst node * inst node
   | I_drop
+  | I_drop_n of Z.t
   | I_dup
   | I_swap
+  | I_dig of Z.t
+  | I_dug of Z.t
   | I_push of typ node * data node
   | I_some
   | I_none of typ node
@@ -48,6 +56,7 @@ and inst =
   | I_size
   | I_empty_set of comparable_type node
   | I_empty_map of comparable_type node * typ node
+  | I_empty_big_map of comparable_type node * typ node
   | I_map of inst node
   | I_iter of inst node
   | I_mem
@@ -59,18 +68,21 @@ and inst =
   | I_lambda of typ node * typ node * inst node
   | I_exec
   | I_dip of inst node
-  | I_failwith of data node
+  | I_dip_n of Z.t * inst node
+  | I_failwith
   | I_cast
   | I_rename
   | I_concat
   | I_slice
   | I_pack
-  | I_unpack
+  | I_unpack of typ node
   | I_add
   | I_sub
   | I_mul
   | I_ediv
   | I_abs
+  | I_isnat
+  | I_int
   | I_neg
   | I_lsl
   | I_lsr
@@ -104,6 +116,7 @@ and inst =
   | I_source
   | I_sender
   | I_address
+  | I_chain_id
 
 and data =
   | D_int of Z.t
@@ -125,17 +138,22 @@ and data =
   | D_list of data node list
   | D_set of data node list
   | D_map of (data node * data node) list
-  | D_instruction of inst node
+  (* | D_instruction of inst node *)
+  | D_bytes of string
 
 and _ node_data =
   | Inst : inst -> inst node_data
   | Data : data -> data node_data
   | Type : typ -> typ node_data
   | Comparable_type : comparable_type -> comparable_type node_data
+  | Simp_comparable_type :
+      simp_comparable_type
+      -> simp_comparable_type node_data
 
 and 'a node = {loc: Location.t; data: 'a node_data}
 
-type program =
-  {param: typ node; storage: typ node; return: typ node; code: inst node}
+type program = {param: typ node; storage: typ node; code: inst node}
+
+val create_node : ?loc:Location.t -> 'a node_data -> 'a node
 
 val get_node_data : 'a node -> 'a
