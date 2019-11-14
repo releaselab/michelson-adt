@@ -1,4 +1,4 @@
-type simp_comparable_type =
+type comparable_type =
   | T_int
   | T_nat
   | T_string
@@ -8,10 +8,6 @@ type simp_comparable_type =
   | T_key_hash
   | T_timestamp
   | T_address
-
-and comparable_type =
-  | T_simp of simp_comparable_type node
-  | T_cmp_pair of simp_comparable_type node * comparable_type node
 
 and typ =
   | T_comparable of comparable_type node
@@ -117,6 +113,7 @@ and inst =
   | I_sender
   | I_address
   | I_chain_id
+  | I_noop
 
 and data =
   | D_int of Z.t
@@ -146,13 +143,10 @@ and _ node_data =
   | Data : data -> data node_data
   | Type : typ -> typ node_data
   | Comparable_type : comparable_type -> comparable_type node_data
-  | Simp_comparable_type :
-      simp_comparable_type
-      -> simp_comparable_type node_data
 
-and 'a node = {loc: Location.t; data: 'a node_data}
+and 'a node = { loc : Location.t; data : 'a node_data }
 
-type program = {param: typ node; storage: typ node; code: inst node}
+type program = { param : typ node; storage : typ node; code : inst node }
 
 val create_node : ?loc:Location.t -> 'a node_data -> 'a node
 

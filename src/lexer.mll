@@ -4,7 +4,7 @@
 
   exception Lexing_error of string
 
-  let kwd_tbl = [ "parameter", PARAMETER; "STORAGE", STORAGE; "code", CODE;
+  let kwd_tbl = [ "parameter", PARAMETER; "storage", STORAGE; "code", CODE;
     "Unit", UNIT; "True", BOOLEAN true; "False", BOOLEAN false; "Pair", PAIR;
     "Left", LEFT; "Right", RIGHT; "Some", SOME; "None", NONE; "Elt", ELT;
     "DROP", I_DROP; "DUP", I_DUP; "SWAP", I_SWAP; "DIG", I_DIG; "DUG", I_DUG;
@@ -36,7 +36,8 @@
     "pair", T_PAIR; "or", T_OR; "lambda", T_LAMBDA; "map", T_MAP;
     "big_map", T_BIG_MAP; "chain_id", T_CHAIN_ID; "int", T_INT; "nat", T_NAT;
     "string", T_STRING; "bytes", T_BYTES; "mutez", T_MUTEZ; "bool", T_BOOL;
-    "key_hash", T_KEY_HASH; "timestamp", T_TIMESTAMP; "address", T_ADDRESS ]
+    "key_hash", T_KEY_HASH; "timestamp", T_TIMESTAMP; "address", T_ADDRESS;
+    "IF_SOME", I_IF_SOME ]
 
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }
@@ -50,7 +51,7 @@ let string = '"' string_content* '"'
 let new_line = '\n' | "\r\n"
 let ident = letter (letter | digit | '_')*
 let hex = "0x" ['0'-'9' 'a'-'f' 'A'-'F']+
-let comment = '#' _* new_line
+let comment = '#' [^ '\n']* new_line
 
 rule next_token = parse
   | comment       { new_line lexbuf; next_token lexbuf }
@@ -71,3 +72,8 @@ rule next_token = parse
   | ':'           { COLON }
   | eof           { EOF }
   | _ as c        { raise (Lexing_error ("Illegal character: " ^ String.make 1 c)) }
+
+and comment = parse
+  | new_line  { new_line lexbuf; next_token lexbuf }
+  | eof       { EOF }
+  | _         { comment lexbuf }
