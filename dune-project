@@ -1,5 +1,6 @@
 (lang dune 1.11)
 (name michelson)
+(using menhir 1.0)
 
 (generate_opam_files true)
 

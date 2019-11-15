@@ -1,6 +1,6 @@
-# Michelson parser and AST
+# Michelson parser and OCaml ADT
 
-An OCaml library for parsing Michelson programs into an OCaml-usable AST.
+An OCaml library for parsing Michelson programs into an OCaml ADT.
 
 ---
 
