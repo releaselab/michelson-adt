@@ -22,7 +22,14 @@
       !i *)
   
   let instruction_list_to_seq =
-    List.fold_left (fun acc i -> create_node (Inst (I_seq (acc, i)))) (create_node (Inst I_noop))
+    List.fold_left (fun acc i -> create_node ~loc:acc.loc (Inst (I_seq (acc, i)))) (create_node (Inst I_noop))
+
+  let position_of_lexbuf_pos p =
+    let open Location in
+    let open Lexing in
+    Pos { col = p.pos_cnum; lin = p.pos_lnum }
+
+  let create_node p = create_node ~loc:(position_of_lexbuf_pos p)
 %}
 
 %token <Z.t> NUM
@@ -71,7 +78,7 @@ parameter:
     t=typ { t }
 
 typ:
-    t=typ_d     { create_node (Type t) }
+    t=typ_d     { create_node $symbolstartpos (Type t) }
   | LP t=typ RP { t }
 
 %inline typ_d:
@@ -87,12 +94,12 @@ typ:
   | T_PAIR LP t_1=typ RP LP t_2=typ RP                  { T_pair (t_1, t_2) }
   | T_OR LP t_1=typ RP LP t_2=typ RP                    { T_or (t_1, t_2) }
   | T_LAMBDA LP t_1=typ RP LP t_2=typ RP                { T_lambda (t_1, t_2) }
-  | T_MAP LP t_1=comparable_type RP LP t_2=typ RP       { T_map  (t_1, t_2) }
+  | T_MAP LP t_1=comparable_type RP LP t_2=typ RP       { T_map (t_1, t_2) }
   | T_BIG_MAP LP t_1=comparable_type RP LP t_2=typ RP   { T_big_map (t_1, t_2) }
   | T_CHAIN_ID                                          { T_chain_id }
 
 comparable_type:
-    t=comparable_type_d     { create_node (Comparable_type t) }
+    t=comparable_type_d     { create_node $symbolstartpos (Comparable_type t) }
 
 %inline comparable_type_d:
     T_INT                           { T_int }
@@ -109,7 +116,7 @@ instruction:
     il=separated_list(SEMICOLON, instruction_n) { instruction_list_to_seq il }
 
 %inline instruction_n:
-    i=instruction_d { create_node (Inst i) }
+    i=instruction_d { create_node $symbolstartpos (Inst i) }
 
 %inline instruction_d:
     I_DROP  { I_drop }
@@ -203,7 +210,7 @@ int:
   | MINUS n=NUM { Z.neg n }
 
 data:
-  d=data_d  { create_node (Data d) }
+  d=data_d  { create_node $symbolstartpos (Data d) }
 
 %inline data_d:
     n=int { D_int n }
