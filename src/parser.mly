@@ -1,6 +1,6 @@
 
 %{
-  open Ast
+  open Adt
 
   (*open Lexing*)
 
@@ -56,7 +56,7 @@
 %token T_MUTEZ T_BOOL T_KEY_HASH T_TIMESTAMP T_ADDRESS I_IF_SOME
 %token EOF
 
-%start <Ast.program> start
+%start <Adt.program> start
 
 %%
 
