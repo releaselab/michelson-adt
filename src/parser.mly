@@ -21,8 +21,8 @@
       let () = i := !i + 1 in
       !i *)
   
-  let instruction_list_to_seq =
-    List.fold_left (fun acc i -> create_node ~loc:acc.loc (Inst (I_seq (acc, i)))) (create_node (Inst I_noop))
+  (*let instruction_list_to_seq =
+    List.fold_left (fun acc i -> create_node ~loc:acc.loc (Inst (I_seq (acc, i)))) (create_node (Inst I_noop))*)
 
   let position_of_lexbuf_pos p =
     let open Location in
@@ -64,12 +64,15 @@ start:
   p=program EOF { p }
 
 program:
-    CODE LB code=instruction RB SEMICOLON STORAGE storage=storage SEMICOLON PARAMETER param=parameter SEMICOLON?
-  | CODE LB code=instruction RB SEMICOLON PARAMETER param=parameter SEMICOLON STORAGE storage=storage SEMICOLON?
-  | STORAGE storage=storage SEMICOLON CODE LB code=instruction RB SEMICOLON PARAMETER param=parameter SEMICOLON?
-  | STORAGE storage=storage SEMICOLON PARAMETER param=parameter SEMICOLON CODE LB code=instruction RB SEMICOLON?
-  | PARAMETER param=parameter SEMICOLON CODE LB code=instruction RB SEMICOLON STORAGE storage=storage SEMICOLON?
-  | PARAMETER param=parameter SEMICOLON STORAGE storage=storage SEMICOLON CODE LB code=instruction RB SEMICOLON?  { { param; storage; code; } }
+    CODE code=code SEMICOLON STORAGE storage=storage SEMICOLON PARAMETER param=parameter SEMICOLON?
+  | CODE code=code SEMICOLON PARAMETER param=parameter SEMICOLON STORAGE storage=storage SEMICOLON?
+  | STORAGE storage=storage SEMICOLON CODE code=code SEMICOLON PARAMETER param=parameter SEMICOLON?
+  | STORAGE storage=storage SEMICOLON PARAMETER param=parameter SEMICOLON CODE code=code SEMICOLON?
+  | PARAMETER param=parameter SEMICOLON CODE code=code SEMICOLON STORAGE storage=storage SEMICOLON?
+  | PARAMETER param=parameter SEMICOLON STORAGE storage=storage SEMICOLON CODE code=code SEMICOLON?  { { param; storage; code; } }
+
+code:
+    LB i=instruction_seq RB { i }
 
 storage:
     t=typ { t }
@@ -91,11 +94,11 @@ typ:
   | T_SET t=comparable_type                             { T_set t }
   | T_OPERATION                                         { T_operation }
   | T_CONTRACT t=typ                                    { T_contract t }
-  | T_PAIR LP t_1=typ RP LP t_2=typ RP                  { T_pair (t_1, t_2) }
-  | T_OR LP t_1=typ RP LP t_2=typ RP                    { T_or (t_1, t_2) }
-  | T_LAMBDA LP t_1=typ RP LP t_2=typ RP                { T_lambda (t_1, t_2) }
-  | T_MAP LP t_1=comparable_type RP LP t_2=typ RP       { T_map (t_1, t_2) }
-  | T_BIG_MAP LP t_1=comparable_type RP LP t_2=typ RP   { T_big_map (t_1, t_2) }
+  | T_PAIR t_1=typ t_2=typ                              { T_pair (t_1, t_2) }
+  | T_OR t_1=typ t_2=typ                                { T_or (t_1, t_2) }
+  | T_LAMBDA t_1=typ t_2=typ                            { T_lambda (t_1, t_2) }
+  | T_MAP t_1=comparable_type t_2=typ                   { T_map (t_1, t_2) }
+  | T_BIG_MAP t_1=comparable_type t_2=typ               { T_big_map (t_1, t_2) }
   | T_CHAIN_ID                                          { T_chain_id }
 
 comparable_type:
@@ -113,7 +116,14 @@ comparable_type:
   | T_ADDRESS                       { T_address }
 
 instruction:
-    il=separated_list(SEMICOLON, instruction_n) { instruction_list_to_seq il }
+    i=instruction_n
+  | i=delimited(LB, instruction_seq, RB) { i }
+
+instruction_seq:
+    { create_node $symbolstartpos (Inst I_noop) }
+  | i=instruction_n { i }
+  | i_1=instruction_n SEMICOLON i_2=instruction_seq { create_node $symbolstartpos (Inst (I_seq (i_1, i_2))) }
+  
 
 %inline instruction_n:
     i=instruction_d { create_node $symbolstartpos (Inst i) }
@@ -129,33 +139,33 @@ instruction:
   | I_SOME  { I_some }
   | I_NONE t=typ  { I_none t }
   | I_UNIT  { I_unit  }
-  | I_IF_NONE LB i_1=instruction RB LB i_2=instruction RB { I_if_none (i_1, i_2) }
-  | I_IF_SOME LB i_1=instruction RB LB i_2=instruction RB { I_if_none (i_2, i_1) }
+  | I_IF_NONE i_1=instruction i_2=instruction { I_if_none (i_1, i_2) }
+  | I_IF_SOME i_1=instruction i_2=instruction { I_if_none (i_2, i_1) }
   | I_PAIR  { I_pair }
   | I_CAR { I_car }
   | I_CDR { I_cdr }
   | I_LEFT t=typ  { I_left t }
   | I_RIGHT t=typ { I_right t }
-  | I_IF_LEFT LB i_1=instruction RB LB i_2=instruction RB { I_if_left (i_1, i_2) }
+  | I_IF_LEFT i_1=instruction i_2=instruction { I_if_left (i_1, i_2) }
   | I_NIL t=typ { I_nil t }
   | I_CONS  { I_cons }
-  | I_IF_CONS LB i_1=instruction RB LB i_2=instruction RB { I_if_cons (i_1, i_2) }
+  | I_IF_CONS i_1=instruction i_2=instruction { I_if_cons (i_1, i_2) }
   | I_SIZE  { I_size }
   | I_EMPTY_SET t=comparable_type { I_empty_set t }
   | I_EMPTY_MAP t_1=comparable_type t_2=typ { I_empty_map (t_1, t_2) }
   | I_EMPTY_BIG_MAP t_1=comparable_type t_2=typ { I_empty_big_map (t_1, t_2) }
-  | I_MAP LB i=instruction RB { I_map i }
-  | I_ITER LB i=instruction RB  { I_iter i }
+  | I_MAP i=instruction { I_map i }
+  | I_ITER i=instruction { I_iter i }
   | I_MEM { I_mem }
   | I_GET { I_get }
   | I_UPDATE  { I_update }
-  | I_IF LB i_1=instruction RB LB i_2=instruction RB  { I_if (i_1, i_2) }
-  | I_LOOP LB i=instruction RB  { I_loop i }
-  | I_LOOP_LEFT LB i=instruction RB { I_loop_left i }
-  | I_LAMBDA t_1=typ t_2=typ LB i=instruction RB  { I_lambda (t_1, t_2, i)}
+  | I_IF i_1=instruction i_2=instruction  { I_if (i_1, i_2) }
+  | I_LOOP i=instruction  { I_loop i }
+  | I_LOOP_LEFT i=instruction { I_loop_left i }
+  | I_LAMBDA t_1=typ t_2=typ i=instruction  { I_lambda (t_1, t_2, i)}
   | I_EXEC  { I_exec }
-  | I_DIP LB i=instruction RB { I_dip i }
-  | I_DIP n=NUM LB i=instruction RB { I_dip_n (n, i) }
+  | I_DIP i=instruction { I_dip i }
+  | I_DIP n=NUM i=instruction { I_dip_n (n, i) }
   | I_FAILWITH  { I_failwith }
   | I_CAST  { I_cast }
   | I_RENAME { I_rename }
@@ -189,7 +199,7 @@ instruction:
   | I_TRANSFER_TOKENS { I_transfer_tokens }
   | I_SET_DELEGATE { I_set_delegate }
   | I_CREATE_ACCOUNT { I_create_account }
-  | I_CREATE_CONTRACT LB i=instruction RB { I_create_contract i }
+  | I_CREATE_CONTRACT i=instruction { I_create_contract i }
   | I_IMPLICIT_ACCOUNT { I_implicit_account }
   | I_NOW { I_now }
   | I_AMOUNT { I_amount }
@@ -223,8 +233,8 @@ data:
   | RIGHT d=data  { D_right d }
   | SOME d=data { D_some d }
   | NONE  { D_none }
-  | LB d=separated_nonempty_list(SEMICOLON, elt) RB { D_map d }
-  | LB d=separated_nonempty_list(SEMICOLON, data) RB { D_set d }
+  | d=delimited(LB, separated_nonempty_list(SEMICOLON, elt), RB) { D_map d }
+  | d=delimited(LB, separated_nonempty_list(SEMICOLON, data), RB) { D_set d }
   /* | i=instruction { D_instruction i } */
 
 %inline elt:
