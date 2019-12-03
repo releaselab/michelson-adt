@@ -2,11 +2,11 @@
     (name michelson)
     (public_name michelson)
     (libraries zarith)
+    (flags :standard -w -9-32-27 -linkall)
     (modules_without_implementation location))
 
 (menhir
     (modules parser)
     (flags --explain))
-    
-(ocamllex lexer)
 
+(ocamllex lexer)
