@@ -5,3 +5,5 @@ open Ptree
 
 let id =
   Qident {id_str = "ola"; id_ats = []; id_loc = Loc.dummy_position}
+
+let t_int = T_int
