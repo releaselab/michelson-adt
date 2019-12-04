@@ -14,6 +14,13 @@
                   -linkall
                   -linkpkg
                   -package zarith
+                  -package michelson
                   %{deps}
                   -o %{targets}
   )))
+
+(install
+  (section lib_root)
+  (files
+   (plugin_why3michelson.cmxs as why3michelson/plugins/plugin_why3michelson.cmxs))
+  (package why3michelson))
