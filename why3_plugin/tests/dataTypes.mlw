@@ -1,0 +1,232 @@
+(* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+*                                                                                         *
+*   MIT License                                                                           *
+*                                                                                         *
+*   Copyright 2019 Luís Pedro Arrojado Horta                                              *
+*                                                                                         *
+*                                                                                         *
+*   Permission is hereby granted, free of charge, to any person obtaining a copy of       *
+*   this software and associated documentation files (the "Software"), to deal in         *
+*   the Software without restriction, including without limitation the rights to use,     *
+*   copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the       *
+*   Software, and to permit persons to whom the Software is furnished to do so, subject   *
+*   to the following conditions:                                                          *
+*                                                                                         *
+*   The above copyright notice and this permission notice shall be included in all        *
+*   copies or substantial portions of the Software.                                       *
+*                                                                                         *
+*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
+*   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
+*   PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
+*   HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF  *
+*   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE  *
+*   OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
+*                                                                                         *
+*   End of Lincese                                                                        *
+*                                                                                         *
+*   Research Supported by the Tezos Foundation through project:                           *
+*   FRESCO - FoRmal vErification of Smart COntracts.                                      *
+*                                                                                         *
+*  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
+
+module DataTypes
+
+use natural.Natural
+use int.Int
+use import bv.BV8 as Bytes
+use seq.Seq
+use string.Char
+use export list.List
+use set.Fset
+use option.Option
+
+type comparable =
+  | Int int
+  | Nat Natural.nat
+  | String (seq char)
+  | Bytes (seq Bytes.t)
+  | Mutez int
+  | Bool bool
+  | Key_hash (seq char)
+  | Timestamp (seq char)
+
+type my_map 'a = {
+  map: comparable -> option 'a;
+  ghost dom: set comparable;
+  size: int;
+}
+
+predicate well_formed_map (m : my_map 'a) =
+    (forall k. mem k m.dom <-> m.map k <> None) /\  (m.size = cardinal m.dom)
+
+clone appset.Appset with type elt = comparable
+
+type comparable_t =
+    Int_t
+  | Nat_t
+  | String_t
+  | Bytes_t
+  | Mutez_t
+  | Bool_t
+  | Key_hash_t
+  | Timestamp_t
+
+type typ =
+  | Comparable_t comparable
+  | Key_t
+  | Unit_t
+  | Signature_t
+  | Option_t  typ
+  | List_t  typ
+  | Set_t  comparable
+  | Operation_t
+  | Address_t
+  | Contract_t  typ
+  | Pair_t  (typ , typ)
+  | Or_t  (typ , typ)
+  | Lambda_t  (typ , typ)
+  | Map_t  (comparable , typ)
+  | Big_map_t  (comparable , typ)
+
+type data =
+  | Instruction instruction  (* Added as a convenience for the LAMBDA instruction *)
+  | Comparable comparable
+  | Key data
+  | Unit
+  | Some_data data
+  | None_data
+  | List (list data)
+  | Pair (data, data)
+  | Left data
+  | Right data
+  | Set (Appset.t)
+  | Map (my_map data)
+  | Big_map (my_map data)
+ with instruction = (* For convinience all CAPTIAL types are Michelson native instructions *)
+  | SEQ_I (instruction , instruction)
+  | NOOP
+  | DROP
+  | DUP
+  | SWAP
+  | PUSH (typ , data)
+  | SOME
+  | NONE typ
+  | UNIT
+  | IF_NONE (instruction , instruction)
+  | PAIR
+  | CAR
+  | CDR
+  | LEFT typ
+  | RIGHT typ
+  | IF_LEFT (instruction , instruction)
+  | IF_RIGHT (instruction , instruction)
+  | NIL typ
+  | CONS
+  | IF_CONS (instruction , instruction)
+  | SIZE
+  | EMPTY_SET comparable
+  | EMPTY_MAP (comparable , typ)
+  | MAP instruction
+  | ITER instruction
+  | MEM
+  | GET
+  | UPDATE
+  | IF (instruction , instruction)
+  | LOOP instruction
+  | LOOP_LEFT instruction
+  | LAMBDA (typ , typ , instruction)
+  | EXEC
+  | DIP instruction
+  | FAILWITH data
+  | CAST
+  | RENAME
+  | CONCAT
+  | SLICE
+  | PACK
+  | UNPACK
+  | ADD
+  | SUB
+  | MUL
+  | EDIV
+  | ABS
+  | NEG
+  | LSL
+  | LSR
+  | OR
+  | AND
+  | XOR
+  | NOT
+  | COMPARE
+  | EQ
+  | NEQ
+  | LT
+  | GT
+  | LE
+  | GE
+  | SELF
+  | CONTRACT typ
+  | TRANSFER_TOKENS
+  | SET_DELEGATE
+  | CREATE_ACCOUNT
+  | CREATE_CONTRACT
+  | CREATE_CONTRACT_I instruction
+  | IMPLICIT_ACCOUNT
+  | NOW
+  | AMOUNT
+  | BALANCE
+  | CHECK_SIGNATURE
+  | BLAKE2B
+  | SHA256
+  | SHA512
+  | HASH_KEY
+  | STEPS_TO_QUOTA
+  | SOURCE
+  | SENDER
+  | ADDRESS
+
+predicate well_formed_data (d: data) =
+    match d with
+        | Map m
+        | Big_map m -> well_formed_map m
+        | Key d
+        | Left d
+        | Right d
+        | Some_data d -> well_formed_data d
+        | Pair (d1 , d2) -> well_formed_data d1 /\ well_formed_data d2
+        | List lst -> well_formed_data_list lst
+        | Instruction i -> well_formed_instruction i
+        | _ -> true
+    end
+with well_formed_data_list (l: list data) =
+    match l with
+        | Nil -> true
+        | Cons hd tl -> well_formed_data hd /\ well_formed_data_list tl
+    end
+with well_formed_instruction (ins: instruction) =
+  match ins with
+    | SEQ_I (i1,i2)
+    | IF_NONE (i1,i2)
+    | IF_LEFT (i1,i2)
+    | IF_RIGHT (i1,i2)
+    | IF (i1,i2)
+    | IF_CONS (i1,i2) -> well_formed_instruction i1 /\ well_formed_instruction i2
+    | MAP i
+    | ITER i
+    | LOOP i
+    | DIP i
+    | CREATE_CONTRACT_I i
+    | LAMBDA (_ , _ , i)
+    | LOOP_LEFT i -> well_formed_instruction i
+    | FAILWITH d
+    | PUSH (_ , d) -> well_formed_data d
+    | _ -> true
+  end
+
+
+type well_formed_data = { d : data }
+    invariant { well_formed_data d  }
+
+type well_formed_instruction = { i : instruction }
+    invariant { well_formed_instruction i }
+
+end

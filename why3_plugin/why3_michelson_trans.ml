@@ -54,13 +54,16 @@ let stack_fuel_args = [e_stack; e_fuel]
 
 let use_axiomatic = let axiomatic_sem = mk_id "AxiomaticSem" in
   let q_axiomatic = Qdot (Qident (mk_id "axiomatic"), axiomatic_sem) in
-  Duseimport (Loc.dummy_position, false, [q_axiomatic, None])
+  (*TODO: develpment version ++ Duseimport (Loc.dummy_position, false, [q_axiomatic, None]) *)
+  Duse q_axiomatic
 
 let inst = function
   | I_drop     -> Eidapp (Qident (mk_id "drop"), stack_fuel_args)
   | I_drop_n n -> let n = Z.to_string n in
-      let n = int_literal ILitDec ~neg:false (Lexlib.remove_underscores n) in
-      let n = mk_expr (Econst (Constant.ConstInt n)) in
+      (*TODO: develpment version ++ let n = int_literal ILitDec ~neg:false (Lexlib.remove_underscores n) in *)
+      let n = int_literal_dec (Lexlib.remove_underscores n) in
+      (*TODO: develpment version ++ let n = mk_expr (Econst (Constant.ConstInt n)) in *)
+      let n = mk_expr (Econst (Number.ConstInt {ic_negative = false; ic_abs = n})) in
       Eidapp (Qident (mk_id "drop_n"), stack_fuel_args @ [n])
   | I_swap -> Eidapp (Qident (mk_id "swap"), stack_fuel_args)
   | _ -> assert false (* TODO *)
@@ -70,11 +73,12 @@ let node : type a. a node -> decl = fun n ->
   | Inst i -> let i_app = mk_expr (inst i) in
       let kind = Expr.RKnone in
       let i_let = mk_expr (Elet (id_stack, false, kind, i_app, e_stack)) in
-      let pat = mk_pat (Pvar id_stack_t) in
+      let _pat = mk_pat (Pvar id_stack_t) in
       let mask = Ity.MaskVisible in
       let pty = Some stack_ty in
       let binders = [stack_binder; fuel_binder] in
-      let f_exp = Efun (binders, pty, pat, mask, empty_spec, i_let) in
+      (*TODO: develpment version ++ let f_exp = Efun (binders, pty, pat, mask, empty_spec, i_let) in *)
+      let f_exp = Efun (binders, pty, mask, empty_spec, i_let) in
       let f_exp = mk_expr f_exp in
       Dlet (mk_id "test", false, kind, f_exp)
   | Data _ -> assert false (* TODO *)
@@ -83,3 +87,4 @@ let node : type a. a node -> decl = fun n ->
 
 let program {code} =
   [use_axiomatic; node code]
+

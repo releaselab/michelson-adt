@@ -1,0 +1,493 @@
+module AxiomaticSem
+
+  use int.Int, option.Option
+  use int.Abs, int.EuclideanDivision
+  use seq.Seq, bv.BV8
+  use natural.Natural, util.Util
+  use dataTypes.DataTypes
+
+  type stack_t = seq well_formed_data
+
+  let function mk_wf_data (d: data)
+    requires { well_formed_data d }
+    ensures  { result.d = d }
+  = { d = d }
+
+  let function mk_wf_instruction (i: instruction)
+    requires { well_formed_instruction i }
+    ensures  { result.i = i }
+  = { i = i }
+
+  let function (::) (a: 'a) (b: seq 'a) = (singleton a) ++  b
+
+  (* this is an ill-typed expressions, let us rule them out for now *)
+  (* val failwith (in_stack: stack_t) (fuel: int) : sem_res *)
+  (*   requires { fuel > 0 } *)
+  (*   ensures  { result = Err } *)
+
+  meta coercion function Comparable
+  meta coercion function Int
+
+  (* operations on booleans *)
+
+  val or (in_stack: stack_t) (fuel: int) : stack_t
+    requires {fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+               | Comparable (Bool x), Comparable (Bool y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Bool (x || y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let of_int_x = of_int (eval_nat x) in
+                  let of_int_y = of_int (eval_nat y) in
+                  let tempRes = to_nat (to_int (bw_or of_int_x of_int_y)) in
+                  let res = Comparable (Nat(tempRes)) in
+                  result = (mk_wf_data res) :: out_stack
+               | _ -> false end }
+
+
+  val and (in_stack: stack_t) (fuel: int) : stack_t
+    requires {fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+                let y = in_stack[1] in
+                match x.d, y.d with
+                | Comparable (Bool x), Comparable (Bool y) ->
+                    let out_stack = in_stack[2 ..] in
+                    let res = Comparable (Bool (x && y)) in
+                    result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                    let out_stack = in_stack[2 ..] in
+                    let of_int_x = of_int (eval_nat x) in
+                    let of_int_y = of_int (eval_nat y) in
+                    let tempRes = to_nat (to_int (bw_and of_int_x of_int_y)) in
+                    let res = Comparable (Nat(tempRes)) in
+                    result =  (mk_wf_data res) :: out_stack
+                | Comparable (Int x), Comparable (Nat y) ->
+                    let out_stack = in_stack[2 ..] in
+                    let of_int_y = of_int (eval_nat y) in
+                    let tempRes = to_nat (to_int (bw_and (of_int x) of_int_y)) in
+                    let res = Comparable (Nat(tempRes)) in
+                    result =  (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+
+  val xor (in_stack: stack_t) (fuel: int) : stack_t
+    requires {fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Bool x), Comparable (Bool y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Bool((x || y) && not (x && y))) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let of_int_x = of_int (eval_nat x) in
+                  let of_int_y = of_int (eval_nat y) in
+                  let tempRes = to_nat (to_int (bw_xor of_int_x of_int_y)) in
+                  let res = Comparable (Nat(tempRes)) in
+                  result = (mk_wf_data res) :: out_stack
+               | _ -> false end }
+
+  (* this operation is the 'not' operation but since it is a reserved word we named it not_op *)
+   val not_op (in_stack: stack_t) (fuel: int) : stack_t
+    requires {fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  { let x = in_stack[0] in
+               match x.d with
+                | Comparable (Bool x) ->
+                  let out_stack = in_stack[1 ..] in
+                  let res = Comparable (Bool(not x)) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x) ->
+                  let out_stack = in_stack[1 ..] in
+                  let bw_x = bw_not (of_int (eval_nat x)) in
+                  let res = Comparable (Int (to_int bw_x)) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Int x) ->
+                  let out_stack = in_stack[1 ..] in
+                  let bw_x = bw_not (of_int x) in
+                  let res = Comparable (Int (to_int bw_x)) in
+                  result = (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+    val neg (in_stack: stack_t) (fuel: int) : stack_t
+    requires {fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  { let x = in_stack[0] in
+               match x.d with
+                | Comparable (Nat x) ->
+                  let out_stack = in_stack[1 ..] in
+                  let res = Comparable (Int (-(eval_nat x))) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Int x) ->
+                  let out_stack = in_stack[1 ..] in
+                  let res = Comparable (Int (-x)) in
+                  result = (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+    (* this operation is the 'abs' operation but since it is a reserved word we named it abs_op *)
+  val abs_op (in_stack: stack_t) (fuel: int) : stack_t
+    requires {fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  { let x = in_stack[0] in
+               match x.d with
+                | Comparable (Int x) ->
+                  let out_stack = in_stack[1 ..] in
+                  let res = Comparable (Nat (to_nat (abs x))) in
+                  result = (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+
+  (* ----------------------------------------------------------------- *)
+  val noop (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    ensures  { result = in_stack }
+
+  val push (in_stack: stack_t) (fuel: int) (d: data) : stack_t
+    requires { fuel > 0 }
+    ensures  { result = (mk_wf_data d) ::  in_stack }
+
+  val add (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Int x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = x + y in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Int x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int (x + (eval_nat y))) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int ((eval_nat x) + y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Nat (add_nat x y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+  val sub (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Int x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = x - y in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Int x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int (x - (eval_nat y))) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int ((eval_nat x) - y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int (eval_nat x - eval_nat y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+  val mul (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Int x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = x * y in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Int x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int (x * (eval_nat y))) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Int ((eval_nat x) * y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let res = Comparable (Nat (mult_nat x y)) in
+                  result = (mk_wf_data res) :: out_stack
+                | _ -> false end }
+
+  val ediv (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Int x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  if y = 0 then result = (mk_wf_data None_data) :: out_stack
+                  else let res, rem = div x y, mod x y in
+                    let comp_res  = Comparable (Int res) in
+                    let comp_rem  = Comparable (Nat (to_nat rem)) in
+                    let comp_pair = Pair (comp_res, comp_rem) in
+                  result = (mk_wf_data (Some_data comp_pair)) :: out_stack
+                | Comparable (Int x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  if is_zero_nat y then result = (mk_wf_data None_data) :: out_stack
+                  else let res, rem = div x (eval_nat y), mod x (eval_nat y) in
+                    let comp_res  = Comparable (Int res) in
+                    let comp_rem  = Comparable (Nat (to_nat rem)) in
+                    let comp_pair = Pair (comp_res, comp_rem) in
+                  result = (mk_wf_data (Some_data comp_pair)) :: out_stack
+                | Comparable (Nat x), Comparable (Int y) ->
+                  let out_stack = in_stack[2 ..] in
+                  if y = 0 then result = (mk_wf_data None_data) :: out_stack
+                  else let res, rem = div (eval_nat x) y, mod (eval_nat x) y in
+                    let comp_res  = Comparable (Int res) in
+                    let comp_rem  = Comparable (Nat (to_nat rem)) in
+                    let comp_pair = Pair (comp_res, comp_rem) in
+                  result = (mk_wf_data (Some_data comp_pair)) :: out_stack
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  if is_zero_nat y then result = (mk_wf_data None_data) :: out_stack
+                  else let res, rem = div_nat x y, modulo_nat x y in
+                    let comp_res  = Comparable (Nat res) in
+                    let comp_rem  = Comparable (Nat rem) in
+                    let comp_pair = Pair (comp_res, comp_rem) in
+                  result = (mk_wf_data (Some_data comp_pair)) :: out_stack
+                | _ -> false end }
+
+  (* this operation is the 'lsl' operation but since it is a reserved word we named it lsl_op *)
+  val lsl_op (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    requires { match in_stack[1].d with 
+                | Comparable(Nat n) -> (eval_nat n) <= 256 
+                | _ -> false end }
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let x', y'= of_int (eval_nat x), eval_nat y in
+                  let lsl_x_y = Comparable(Nat (to_nat (to_int (lsl x' y')))) in
+                  result = (mk_wf_data lsl_x_y) :: out_stack
+                | _ -> false end }
+
+  (* this operation is the 'lsr' operation but since it is a reserved word we named it lsr_op *)
+  val lsr_op (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    requires { match in_stack[1].d with 
+                | Comparable(Nat n) -> (eval_nat n) <= 256 
+                | _ -> false end}
+    ensures  { let x = in_stack[0] in
+               let y = in_stack[1] in
+               match x.d, y.d with
+                | Comparable (Nat x), Comparable (Nat y) ->
+                  let out_stack = in_stack[2 ..] in
+                  let x', y'= of_int (eval_nat x), eval_nat y in
+                  let lsr_x_y = Comparable(Nat (to_nat (to_int (lsr x' y')))) in
+                  result = (mk_wf_data lsr_x_y) :: out_stack
+                | _ -> false end }
+
+  val pair (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }    
+    ensures  {  let x = in_stack[0] in
+                let y = in_stack[1] in               
+                let out_stack = in_stack[2 ..] in
+                let res = Pair(x.d,y.d) in (*TODO: ask mario *)
+                result = (mk_wf_data res) :: out_stack }
+
+  val car (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | Pair(l,_) ->
+                  let out_stack = in_stack[1 ..] in                               
+                  result = (mk_wf_data l) :: out_stack
+                | _ -> false end }
+
+  val cdr (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | Pair(_,r) ->
+                  let out_stack = in_stack[1 ..] in                               
+                  result = (mk_wf_data r) :: out_stack
+                | _ -> false end }
+
+  val drop (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  { result = in_stack[1 ..] }
+
+  val drop_n (in_stack: stack_t) (fuel: int) (n: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= n }
+    ensures  { result = in_stack[n ..] }
+
+  (* val drop_n (in_stack: stack_t) (fuel: int) (n: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= n }
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | DROP n -> result = in_stack[n ..]            
+                | _ -> false end } *)
+
+  val dup (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  {  let elt = in_stack[0] in
+                result = elt :: in_stack }
+
+   val dig_n (in_stack: stack_t) (fuel: int) (n: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= n }
+    ensures  {  let elt = in_stack[n] in 
+                if length in_stack > n then                 
+                  result = elt :: (in_stack[1 .. n] ++ in_stack[(n+1)..])
+                else  result = elt :: in_stack[1 .. n] }
+                  
+
+  (* val dig_n (in_stack: stack_t) (fuel: int) (n: int) : stack_t
+    requires { fuel > 0 }
+    requires { n >= 0 }
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | DIG n -> 
+                  let element = in_stack[n] in 
+                  if length in_stack > n then                 
+                    result = element :: (in_stack[1 .. n] ++ in_stack[(n+1)..])
+                  else  result = element :: in_stack[1 .. n] 
+                | _ -> false end } *)
+  
+  val le (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }    
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | Comparable(Int i) ->
+                    let out_stack = in_stack[1 ..] in
+                    let cmp_r = if (compare_int i 0) <= 0 then True else False in
+                    let res =  Comparable (Bool cmp_r) in 
+                    result = (mk_wf_data res) :: out_stack               
+                | _ -> false end }
+
+  val eq (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }    
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | Comparable(Int i) ->
+                    let out_stack = in_stack[1 ..] in
+                     let cmp_r = if compare_int i 0 = 0 then True else False in
+                    let res = Comparable (Bool cmp_r) in                    
+                    result = (mk_wf_data res) :: out_stack               
+                | _ -> false end }
+  
+  (* this operation is the 'unit' operation but since it is a reserved word we named it unit_op *)
+  val unit_op (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 1 }
+    ensures  {  let elt = Unit in
+                result = (mk_wf_data elt) :: in_stack }
+
+  (* val dug_n (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= n }
+    ensures  { let x = in_stack[0] in               
+               match x.d with
+                | DUG n -> 
+                  let element = in_stack[1] in
+                  if length in_stack > 2 then
+
+                  if length in_stack > n then                 
+                    result = element :: (in_stack[1 .. n] ++ in_stack[(n+1)..])
+                  else  result = element :: in_stack[1 .. n] 
+                | _ -> false end } *)
+
+    
+
+  val swap (in_stack: stack_t) (fuel: int) : stack_t
+    requires { fuel > 0 }
+    requires { length in_stack >= 2 }
+    ensures  { result = cons in_stack[1] (cons in_stack[0] in_stack[2 ..]) }
+
+
+  (*
+  operations for multisig
+
+  
+  ADDRESS
+  
+  CHAIN_ID
+  CHECK_SIGNATURE
+  COMPARE
+  CONS
+  DIP
+ 
+  
+ 
+  TODO: DUP_N 
+  
+  FAILWITH
+  IF
+  IF_CONS
+  IF_LEFT
+  IF_NONE
+  ITER
+  
+  NIL
+  PACK
+ 
+  PUSH
+  SELF
+  SET_DELEGATE
+  
+  TRANSFER_TOKENS
+  
+  
+  ****** DONE ******
+  ADD 
+  CAR 
+  CDR
+  DROP
+  DUP 
+  SWAP
+  PAIR
+  EQ
+  UNIT
+  ***** NEED FIXING ******
+  FIXME:
+  LE  
+  DROP_N ***
+
+  *)
+
+  let test_semantics (in_stack: stack_t) : stack_t
+    ensures { match result[0].d with
+              | Comparable (Int x) -> x = 420
+              | _ -> false end }
+  = let s = push in_stack 10 (Comparable (Int 37)) in
+    let s = push s 10 (Comparable (Int 5)) in
+    let s = add s 10 in
+    let s = push s 10 (Comparable (Int 10)) in
+    let s = swap s 10 in
+    let s = mul s 10 in
+    (* assert { exists x. s[0].d = Comparable (Int x) }; *)
+    s
+
+end

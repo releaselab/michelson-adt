@@ -1,0 +1,128 @@
+(* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+*                                                                                         *
+*   MIT License                                                                           *
+*                                                                                         *
+*   Copyright 2019 Luís Pedro Arrojado Horta                                              *
+*                                                                                         *
+*                                                                                         *
+*   Permission is hereby granted, free of charge, to any person obtaining a copy of       *
+*   this software and associated documentation files (the "Software"), to deal in         *
+*   the Software without restriction, including without limitation the rights to use,     *
+*   copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the       *
+*   Software, and to permit persons to whom the Software is furnished to do so, subject   *
+*   to the following conditions:                                                          *  
+*                                                                                         *
+*   The above copyright notice and this permission notice shall be included in all        *
+*   copies or substantial portions of the Software.                                       *
+*                                                                                         *
+*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,   *
+*   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A         *
+*   PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT    *
+*   HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF  *
+*   CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE  *
+*   OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                                         *
+*                                                                                         *
+*   End of Lincese                                                                        *
+*                                                                                         *
+*   Research Supported by the Tezos Foundation through project:                           *
+*   FRESCO - FoRmal vErification of Smart COntracts.                                      *
+*                                                                                         *
+*  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ *)
+
+module Natural
+use int.Int
+
+(* functions over pairs *)
+
+let fst z = 
+  let a,_=z in a
+
+let snd z = 
+  let _,b=z in b
+
+(* type Nat *)
+
+type nat =
+  | O
+  | S  nat
+
+(* functions over Natural Numbers *)
+
+let function  eval_nat (natValue:nat) : int=
+  let rec aux (acc:int) (natValue:nat) : int 
+  variant { natValue }
+  = 
+    match natValue with 
+      O -> acc
+    | S n -> aux (acc+1) n
+    end
+  in aux 0 natValue
+
+let function to_nat n =
+  let rec aux i acc 
+  variant { n - i }
+  =
+      if i >= n then acc 
+      else aux (i+1) (S (acc))
+  in aux 0 O
+
+let rec function add_nat (n:nat) (m:nat) : nat 
+  variant { m }
+  =
+  match m with 
+  | O -> n
+  | S m' -> add_nat (S n) m'
+  end
+
+let rec function sub_nat (n:nat) (m:nat) : nat
+  variant { n }
+  =
+  match n, m with
+  | S k, S l -> sub_nat k  l
+  | _, _ -> n
+  end
+
+let rec function mult_nat (n:nat) (m:nat) : nat 
+  variant { n }
+  =
+  match n with
+  | O -> O
+  | S p -> add_nat m  (mult_nat p  m)
+  end
+
+let function is_zero_nat (n:nat) : bool = 
+  match n with
+  | O -> true
+  | _ -> false
+  end
+
+let pred_nat (n:nat) : nat = 
+  match n with
+  | O -> O
+  | S p -> p
+  end
+
+let rec function divmod_nat (x:nat) (y:nat) (q:nat) (u:nat) : (nat,nat) 
+  variant {x}
+  =
+  match x with
+  | O -> (q,u)
+  | S x' -> match u with
+    | O -> divmod_nat x' y (S q) y
+    | S u' -> divmod_nat x' y q u'
+    end
+  end
+
+let function div_nat (x:nat) (y:nat) : nat =
+  match y with
+  | O -> y
+  | S y' -> fst (divmod_nat x y' O y') 
+  end
+
+let function modulo_nat (x:nat) (y:nat) =
+  match y with
+  | O -> y
+  | S y' -> sub_nat y'  (snd (divmod_nat x y' O y'))
+  end
+
+end 
