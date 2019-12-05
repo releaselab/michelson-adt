@@ -199,7 +199,7 @@ instruction_seq:
   | I_TRANSFER_TOKENS { I_transfer_tokens }
   | I_SET_DELEGATE { I_set_delegate }
   | I_CREATE_ACCOUNT { I_create_account }
-  | I_CREATE_CONTRACT i=instruction { I_create_contract i }
+  | I_CREATE_CONTRACT LB c=program RB { I_create_contract c }
   | I_IMPLICIT_ACCOUNT { I_implicit_account }
   | I_NOW { I_now }
   | I_AMOUNT { I_amount }

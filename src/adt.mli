@@ -98,7 +98,7 @@ and inst =
   | I_transfer_tokens
   | I_set_delegate
   | I_create_account
-  | I_create_contract of inst node
+  | I_create_contract of program
   | I_implicit_account
   | I_now
   | I_amount
@@ -146,7 +146,7 @@ and _ node_data =
 
 and 'a node = { loc : Location.t; data : 'a node_data }
 
-type program = { param : typ node; storage : typ node; code : inst node }
+and program = { param : typ node; storage : typ node; code : inst node }
 
 val create_node : ?loc:Location.t -> 'a node_data -> 'a node
 
