@@ -13,7 +13,7 @@ let read_file file c =
 let read_channel env path file c =
   let p = read_file file c in
   let p = program p in
-  (*TODO: development version ++  List.iter (fun d -> Format.eprintf "%a@." Mlw_printer.pp_decl d) p; *) 
+  List.iter (fun d -> Format.eprintf "%a@." Mlw_printer.pp_decl d) p;
   Typing.open_file env path; (* could remove the Typing. *)
   let id = mk_id "Test" in
   Typing.open_module id;     (* could remove the Typing. *)
