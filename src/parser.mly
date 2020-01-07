@@ -24,12 +24,11 @@
   (*let instruction_list_to_seq =
     List.fold_left (fun acc i -> create_node ~loc:acc.loc (Inst (I_seq (acc, i)))) (create_node (Inst I_noop))*)
 
-  let position_of_lexbuf_pos p =
-    let open Location in
-    let open Lexing in
-    Pos { col = p.pos_cnum; lin = p.pos_lnum }
-
-  let create_node p = create_node ~loc:(position_of_lexbuf_pos p)
+  let create_pair t_1 t_2 =
+    match t_1, t_2 with
+        (T_comparable (T_simple_comparable_type t_1), a_1), (T_comparable t_2, a_2) ->
+          T_comparable (T_comparable_pair ((t_1, a_1), (t_2, a_2)))
+      | _ -> T_pair (t_1, t_2)
 %}
 
 %token <Z.t> NUM
@@ -72,7 +71,7 @@ program:
   | PARAMETER param=parameter SEMICOLON STORAGE storage=storage SEMICOLON CODE code=code SEMICOLON?  { { param; storage; code; } }
 
 code:
-    LB i=instruction_seq RB { i }
+    i=instruction_block { fst i }
 
 storage:
     t=typ { t }
@@ -80,161 +79,169 @@ storage:
 parameter:
     t=typ { t }
 
-typ:
-    t=typ_d     { create_node $symbolstartpos (Type t) }
-  | LP t=typ RP { t }
+%inline field_annot:
+    PERCENT i=IDENT { i }
 
-%inline typ_d:
-    t=comparable_type                                   { T_comparable t }
-  | T_KEY                                               { T_key }
-  | T_UNIT                                              { T_unit }
-  | T_SIGNATURE                                         { T_signature }
-  | T_OPTION t=typ                                      { T_option t }
-  | T_LIST t=typ                                        { T_list t }
-  | T_SET t=comparable_type                             { T_set t }
-  | T_OPERATION                                         { T_operation }
-  | T_CONTRACT t=typ                                    { T_contract t }
-  | T_PAIR t_1=typ t_2=typ                              { T_pair (t_1, t_2) }
-  | T_OR t_1=typ t_2=typ                                { T_or (t_1, t_2) }
-  | T_LAMBDA t_1=typ t_2=typ                            { T_lambda (t_1, t_2) }
-  | T_MAP t_1=comparable_type t_2=typ                   { T_map (t_1, t_2) }
-  | T_BIG_MAP t_1=comparable_type t_2=typ               { T_big_map (t_1, t_2) }
-  | T_CHAIN_ID                                          { T_chain_id }
+%inline type_annot:
+    COLON i=IDENT { i }
+
+%inline type_annotated(T):
+    T                     { None }
+  | LP T a=type_annot? RP { a }
+
+typ:
+    ta=comparable_type                                        { (T_comparable (fst ta), snd ta) }
+  | a=type_annotated(T_KEY)                                   { (T_key, a) }
+  | a=type_annotated(T_UNIT)                                  { (T_unit, a) }
+  | a=type_annotated(T_SIGNATURE)                             { (T_signature, a) }
+  | a=type_annotated(T_OPERATION)                             { (T_operation, a) }
+  | a=type_annotated(T_CHAIN_ID)                              { (T_chain_id, a) }
+  | LP T_OPTION a=type_annot? t=typ RP                        { (T_option t, a) }
+  | LP T_LIST a=type_annot? t=typ RP                          { (T_list t, a) }
+  | LP T_SET a=type_annot? t=comparable_type RP               { (T_set t, a) }
+  | LP T_CONTRACT a=type_annot? t=typ RP                      { (T_contract t, a) }
+  | LP T_PAIR a=type_annot? t_1=typ t_2=typ RP                { (create_pair t_1 t_2, a) }
+  | LP T_OR a=type_annot? t_1=typ t_2=typ RP                  { (T_or (t_1, t_2), a) }
+  | LP T_LAMBDA a=type_annot? t_1=typ t_2=typ RP              { (T_lambda (t_1, t_2), a) }
+  | LP T_MAP a=type_annot? t_1=comparable_type t_2=typ RP     { (T_map (t_1, t_2), a) }
+  | LP T_BIG_MAP a=type_annot? t_1=comparable_type t_2=typ RP { (T_big_map (t_1, t_2), a) }
+
+%inline simple_comparable_type:
+    T_INT       { T_int }
+  | T_NAT       { T_nat }
+  | T_STRING    { T_string }
+  | T_BYTES     { T_bytes }
+  | T_MUTEZ     { T_mutez }
+  | T_BOOL      { T_bool }
+  | T_KEY_HASH  { T_key_hash }
+  | T_TIMESTAMP { T_timestamp }
+  | T_ADDRESS   { T_address }
+
+%inline simple_comparable_type_annot:
+    t=simple_comparable_type                      { t, None }
+  | LP t=simple_comparable_type a=type_annot? RP  { t, a }
 
 comparable_type:
-    t=comparable_type_d     { create_node $symbolstartpos (Comparable_type t) }
+    t=simple_comparable_type_annot { T_simple_comparable_type (fst t), (snd t) }
 
-%inline comparable_type_d:
-    T_INT                           { T_int }
-  | T_NAT                           { T_nat }
-  | T_STRING                        { T_string }
-  | T_BYTES                         { T_bytes }
-  | T_MUTEZ                         { T_mutez }
-  | T_BOOL                          { T_bool }
-  | T_KEY_HASH                      { T_key_hash }
-  | T_TIMESTAMP                     { T_timestamp }
-  | T_ADDRESS                       { T_address }
+%inline instruction_block:
+  LB i=instruction RB { i }
 
 instruction:
-    i=instruction_n
-  | i=delimited(LB, instruction_seq, RB) { i }
+    { (I_noop, []) }
+  | i=instruction_d { i }
+  | i_1=instruction_d SEMICOLON i_2=instruction { (I_seq (i_1, i_2), []) }
 
-instruction_seq:
-    { create_node $symbolstartpos (Inst I_noop) }
-  | i=instruction_n { i }
-  | i_1=instruction_n SEMICOLON i_2=instruction_seq { create_node $symbolstartpos (Inst (I_seq (i_1, i_2))) }
-  
+%inline var_annot:
+    AT i=IDENT { i }
 
-%inline instruction_n:
-    i=instruction_d { create_node $symbolstartpos (Inst i) }
+%inline inst_annot(I):
+    I a=var_annot* { a }
 
-%inline instruction_d:
-    I_DROP  { I_drop }
-  | I_DROP n=NUM { I_drop_n n }
-  | I_DUP { I_dup }
-  | I_SWAP { I_swap }
-  | I_DIG n=NUM { I_dig n }
-  | I_DUG n=NUM { I_dug n }
-  | I_PUSH t=typ d=data { I_push (t, d) }
-  | I_SOME  { I_some }
-  | I_NONE t=typ  { I_none t }
-  | I_UNIT  { I_unit  }
-  | I_IF_NONE i_1=instruction i_2=instruction { I_if_none (i_1, i_2) }
-  | I_IF_SOME i_1=instruction i_2=instruction { I_if_none (i_2, i_1) }
-  | I_PAIR  { I_pair }
-  | I_CAR { I_car }
-  | I_CDR { I_cdr }
-  | I_LEFT t=typ  { I_left t }
-  | I_RIGHT t=typ { I_right t }
-  | I_IF_LEFT i_1=instruction i_2=instruction { I_if_left (i_1, i_2) }
-  | I_NIL t=typ { I_nil t }
-  | I_CONS  { I_cons }
-  | I_IF_CONS i_1=instruction i_2=instruction { I_if_cons (i_1, i_2) }
-  | I_SIZE  { I_size }
-  | I_EMPTY_SET t=comparable_type { I_empty_set t }
-  | I_EMPTY_MAP t_1=comparable_type t_2=typ { I_empty_map (t_1, t_2) }
-  | I_EMPTY_BIG_MAP t_1=comparable_type t_2=typ { I_empty_big_map (t_1, t_2) }
-  | I_MAP i=instruction { I_map i }
-  | I_ITER i=instruction { I_iter i }
-  | I_MEM { I_mem }
-  | I_GET { I_get }
-  | I_UPDATE  { I_update }
-  | I_IF i_1=instruction i_2=instruction  { I_if (i_1, i_2) }
-  | I_LOOP i=instruction  { I_loop i }
-  | I_LOOP_LEFT i=instruction { I_loop_left i }
-  | I_LAMBDA t_1=typ t_2=typ i=instruction  { I_lambda (t_1, t_2, i)}
-  | I_EXEC  { I_exec }
-  | I_DIP i=instruction { I_dip i }
-  | I_DIP n=NUM i=instruction { I_dip_n (n, i) }
-  | I_FAILWITH  { I_failwith }
-  | I_CAST  { I_cast }
-  | I_RENAME { I_rename }
-  | I_CONCAT { I_concat }
-  | I_SLICE { I_slice }
-  | I_PACK { I_pack }
-  | I_UNPACK t=typ { I_unpack t }
-  | I_ADD { I_add }
-  | I_SUB { I_sub }
-  | I_MUL { I_mul }
-  | I_EDIV { I_ediv }
-  | I_ABS { I_abs }
-  | I_ISNAT { I_isnat }
-  | I_INT { I_int }
-  | I_NEG { I_neg }
-  | I_LSL { I_lsl }
-  | I_LSR { I_lsr }
-  | I_OR { I_or }
-  | I_AND { I_and }
-  | I_XOR { I_xor }
-  | I_NOT { I_not }
-  | I_COMPARE { I_compare }
-  | I_EQ { I_eq }
-  | I_NEQ { I_neq }
-  | I_LT { I_lt }
-  | I_GT { I_gt }
-  | I_LE { I_le }
-  | I_GE { I_ge }
-  | I_SELF { I_self }
-  | I_CONTRACT t=typ { I_contract t }
-  | I_TRANSFER_TOKENS { I_transfer_tokens }
-  | I_SET_DELEGATE { I_set_delegate }
-  | I_CREATE_ACCOUNT { I_create_account }
-  | I_CREATE_CONTRACT LB c=program RB { I_create_contract c }
-  | I_IMPLICIT_ACCOUNT { I_implicit_account }
-  | I_NOW { I_now }
-  | I_AMOUNT { I_amount }
-  | I_BALANCE { I_balance }
-  | I_CHECK_SIGNATURE { I_check_signature }
-  | I_BLAKE2B { I_blake2b }
-  | I_SHA256 { I_sha256 }
-  | I_SHA512 { I_sha512 }
-  | I_HASH_KEY { I_hash_key }
-  | I_STEPS_TO_QUOTA { I_steps_to_quota }
-  | I_SOURCE { I_source }
-  | I_SENDER { I_sender }
-  | I_ADDRESS { I_address }
-  | I_CHAIN_ID { I_chain_id }
+instruction_d:
+    a=inst_annot(I_DROP)  { (I_drop, a) }
+  | a=inst_annot(I_DROP) n=NUM { I_drop_n n, a }
+  | a=inst_annot(I_DUP) { I_dup, a }
+  | a=inst_annot(I_SWAP) { I_swap, a }
+  | a=inst_annot(I_DIG) n=NUM { I_dig n, a }
+  | a=inst_annot(I_DUG) n=NUM { I_dug n, a }
+  | a=inst_annot(I_PUSH) t=typ d=data { I_push (t, data_of_parser_data t d), a }
+  | a=inst_annot(I_SOME)  { I_some, a }
+  | a=inst_annot(I_NONE) t=typ  { I_none t, a }
+  | a=inst_annot(I_UNIT)  { I_unit , a }
+  | a=inst_annot(I_IF_NONE) i_1=instruction_block i_2=instruction_block { I_if_none (i_1, i_2), a }
+  | a=inst_annot(I_IF_SOME) i_1=instruction_block i_2=instruction_block { I_if_none (i_2, i_1), a }
+  | a=inst_annot(I_PAIR)  { I_pair, a }
+  | a=inst_annot(I_CAR) { I_car, a }
+  | a=inst_annot(I_CDR) { I_cdr, a }
+  | a=inst_annot(I_LEFT) t=typ  { I_left t, a }
+  | a=inst_annot(I_RIGHT) t=typ { I_right t, a }
+  | a=inst_annot(I_IF_LEFT) i_1=instruction_block i_2=instruction_block { I_if_left (i_1, i_2), a }
+  | a=inst_annot(I_NIL) t=typ { I_nil t, a }
+  | a=inst_annot(I_CONS)  { I_cons, a }
+  | a=inst_annot(I_IF_CONS) i_1=instruction_block i_2=instruction_block { I_if_cons (i_1, i_2), a }
+  | a=inst_annot(I_SIZE)  { I_size, a }
+  | a=inst_annot(I_EMPTY_SET) t=comparable_type { I_empty_set t, a }
+  | a=inst_annot(I_EMPTY_MAP) t_1=comparable_type t_2=typ { I_empty_map (t_1, t_2), a }
+  | a=inst_annot(I_EMPTY_BIG_MAP) t_1=comparable_type t_2=typ { I_empty_big_map (t_1, t_2), a }
+  | a=inst_annot(I_MAP) i=instruction_block { I_map i, a }
+  | a=inst_annot(I_ITER) i=instruction_block { I_iter i, a }
+  | a=inst_annot(I_MEM) { I_mem, a }
+  | a=inst_annot(I_GET) { I_get, a }
+  | a=inst_annot(I_UPDATE)  { I_update, a }
+  | a=inst_annot(I_IF) i_1=instruction_block i_2=instruction_block  { I_if (i_1, i_2), a }
+  | a=inst_annot(I_LOOP) i=instruction_block  { I_loop i, a }
+  | a=inst_annot(I_LOOP_LEFT) i=instruction_block { I_loop_left i, a }
+  | a=inst_annot(I_LAMBDA) t_1=typ t_2=typ i=instruction_block  { I_lambda (t_1, t_2, i), a }
+  | a=inst_annot(I_EXEC)  { I_exec, a }
+  | a=inst_annot(I_DIP) i=instruction_block { I_dip i, a }
+  | a=inst_annot(I_DIP) n=NUM i=instruction_block { I_dip_n (n, i), a }
+  | a=inst_annot(I_FAILWITH)  { I_failwith, a }
+  | a=inst_annot(I_CAST)  { I_cast, a }
+  | a=inst_annot(I_RENAME) { I_rename, a }
+  | a=inst_annot(I_CONCAT) { I_concat, a }
+  | a=inst_annot(I_SLICE) { I_slice, a }
+  | a=inst_annot(I_PACK) { I_pack, a }
+  | a=inst_annot(I_UNPACK) t=typ { I_unpack t, a }
+  | a=inst_annot(I_ADD) { I_add, a }
+  | a=inst_annot(I_SUB) { I_sub, a }
+  | a=inst_annot(I_MUL) { I_mul, a }
+  | a=inst_annot(I_EDIV) { I_ediv, a }
+  | a=inst_annot(I_ABS) { I_abs, a }
+  | a=inst_annot(I_ISNAT) { I_isnat, a }
+  | a=inst_annot(I_INT) { I_int, a }
+  | a=inst_annot(I_NEG) { I_neg, a }
+  | a=inst_annot(I_LSL) { I_lsl, a }
+  | a=inst_annot(I_LSR) { I_lsr, a }
+  | a=inst_annot(I_OR) { I_or, a }
+  | a=inst_annot(I_AND) { I_and, a }
+  | a=inst_annot(I_XOR) { I_xor, a }
+  | a=inst_annot(I_NOT) { I_not, a }
+  | a=inst_annot(I_COMPARE) { I_compare, a }
+  | a=inst_annot(I_EQ) { I_eq, a }
+  | a=inst_annot(I_NEQ) { I_neq, a }
+  | a=inst_annot(I_LT) { I_lt, a }
+  | a=inst_annot(I_GT) { I_gt, a }
+  | a=inst_annot(I_LE) { I_le, a }
+  | a=inst_annot(I_GE) { I_ge, a }
+  | a=inst_annot(I_SELF) { I_self, a }
+  | a=inst_annot(I_CONTRACT) t=typ { I_contract t, a }
+  | a=inst_annot(I_TRANSFER_TOKENS) { I_transfer_tokens, a }
+  | a=inst_annot(I_SET_DELEGATE) { I_set_delegate, a }
+  | a=inst_annot(I_CREATE_ACCOUNT) { I_create_account, a }
+  | a=inst_annot(I_CREATE_CONTRACT) LB c=program RB { I_create_contract c, a }
+  | a=inst_annot(I_IMPLICIT_ACCOUNT) { I_implicit_account, a }
+  | a=inst_annot(I_NOW) { I_now, a }
+  | a=inst_annot(I_AMOUNT) { I_amount, a }
+  | a=inst_annot(I_BALANCE) { I_balance, a }
+  | a=inst_annot(I_CHECK_SIGNATURE) { I_check_signature, a }
+  | a=inst_annot(I_BLAKE2B) { I_blake2b, a }
+  | a=inst_annot(I_SHA256) { I_sha256, a }
+  | a=inst_annot(I_SHA512) { I_sha512, a }
+  | a=inst_annot(I_HASH_KEY) { I_hash_key, a }
+  | a=inst_annot(I_STEPS_TO_QUOTA) { I_steps_to_quota, a }
+  | a=inst_annot(I_SOURCE) { I_source, a }
+  | a=inst_annot(I_SENDER) { I_sender, a }
+  | a=inst_annot(I_ADDRESS) { I_address, a }
+  | a=inst_annot(I_CHAIN_ID) { I_chain_id, a }
 
 int:
     n=NUM { n }
   | MINUS n=NUM { Z.neg n }
 
 data:
-  d=data_d  { create_node $symbolstartpos (Data d) }
-
-%inline data_d:
-    n=int { D_int n }
-  | s=STRING  { D_string s }
-  | b=HEX { D_bytes b }
-  | UNIT  { D_unit }
-  | b=BOOLEAN  { D_bool b }
-  | PAIR d_1=data d_2=data  { D_pair (d_1, d_2) }
-  | LEFT d=data { D_left d }
-  | RIGHT d=data  { D_right d }
-  | SOME d=data { D_some d }
-  | NONE  { D_none }
-  | d=delimited(LB, separated_nonempty_list(SEMICOLON, elt), RB) { D_map d }
-  | d=delimited(LB, separated_nonempty_list(SEMICOLON, data), RB) { D_set d }
+    n=int { P_int n }
+  | s=STRING  { P_string s }
+  | b=HEX { P_bytes b }
+  | UNIT  { P_unit }
+  | b=BOOLEAN  { P_bool b }
+  | PAIR d_1=data d_2=data  { P_pair (d_1, d_2) }
+  | LEFT d=data { P_left d }
+  | RIGHT d=data  { P_right d }
+  | SOME d=data { P_some d }
+  | NONE  { P_none }
+  | d=delimited(LB, separated_nonempty_list(SEMICOLON, elt), RB) { P_map d }
+  | d=delimited(LB, separated_nonempty_list(SEMICOLON, data), RB) { P_list d }
   /* | i=instruction { D_instruction i } */
 
 %inline elt:
