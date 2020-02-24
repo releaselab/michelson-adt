@@ -152,8 +152,8 @@ and data =
   | D_some of data
   | D_none of typ_annotated
   | D_list of typ_annotated * data list
-  | D_set of typ_annotated * data list
-  | D_map of (data * data) list
+  | D_set of comparable_type_annotated * data list
+  | D_map of (comparable_type_annotated * typ_annotated) * (data * data) list
   (* | D_instruction of inst *)
   | D_bytes of string
 

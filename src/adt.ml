@@ -154,8 +154,8 @@ and data =
   | D_some of data
   | D_none of typ_annotated
   | D_list of typ_annotated * data list
-  | D_set of typ_annotated * data list
-  | D_map of (data * data) list
+  | D_set of comparable_type_annotated * data list
+  | D_map of (comparable_type_annotated * typ_annotated) * (data * data) list
   (* | D_instruction of inst *)
   | D_bytes of string
 
@@ -227,17 +227,18 @@ let rec data_of_parser_data (t, _) d =
       | T_list t -> D_list (t, List.map (data_of_parser_data t) d)
       | T_set (t, a) ->
           let t' = (T_comparable t, a) in
-          D_set (t', List.map (data_of_parser_data t') d)
+          D_set ((t, a), List.map (data_of_parser_data t') d)
       | _ -> assert false )
   | P_map d -> (
       match t with
       | T_map ((t_1, a_1), t_2) ->
           D_map
-            (List.map
-               (fun (k, v) ->
-                 ( data_of_parser_data (T_comparable t_1, a_1) k,
-                   data_of_parser_data t_2 v ))
-               d)
+            ( ((t_1, a_1), t_2),
+              List.map
+                (fun (k, v) ->
+                  ( data_of_parser_data (T_comparable t_1, a_1) k,
+                    data_of_parser_data t_2 v ))
+                d )
       | _ -> assert false )
   | P_unit -> ( match t with T_unit -> D_unit | _ -> assert false )
 
