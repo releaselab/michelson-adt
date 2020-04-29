@@ -133,6 +133,7 @@ and inst =
   | I_address
   | I_chain_id
   | I_noop
+  | I_unpair
 
 and inst_annotated = inst * string list
 
