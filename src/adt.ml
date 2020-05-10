@@ -243,14 +243,6 @@ let rec data_of_parser_data (t, _) d =
       | _ -> assert false )
   | P_unit -> ( match t with T_unit -> D_unit | _ -> assert false )
 
-(* 
-  | T_key, P_string s -> D_key s
-  | T_unit, P_unit -> D_unit
-  | T_signature, P_string s -> D_signature s
-  | T_option (t, _), P_some d -> D_some (data_of_parser_data t d)
-  | T_option (t, _), P_none -> D_none
-  | T_list (t, _), P_list d -> D_list (List.map (data_of_parser_data t) d)
-  | T_set (t, _), P_list d -> D_set (List.map (data_of_parser_data (T_comparable t)) d)
-  | T_operation 
-  | T_unit, P_unit -> D_unit
-  |  *)
+let num_of_string = Z.of_string
+
+let num_of_int = Z.of_int

@@ -177,3 +177,7 @@ type parser_data =
   | P_list of parser_data list
 
 val data_of_parser_data : typ_annotated -> parser_data -> data
+
+val num_of_string : string -> Z.t
+
+val num_of_int : int -> Z.t
