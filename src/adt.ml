@@ -139,26 +139,17 @@ and inst_annotated = inst * string list
 
 and data =
   | D_int of Z.t
-  | D_nat of Z.t
   | D_string of string
-  | D_timestamp of string
-  | D_signature of string
-  | D_key of string
-  | D_key_hash of string
-  | D_mutez of Z.t
-  | D_address of string
+  | D_bytes of string
   | D_unit
   | D_bool of bool
   | D_pair of data * data
   | D_left of data
   | D_right of data
   | D_some of data
-  | D_none of typ_annotated
-  | D_list of typ_annotated * data list
-  | D_set of comparable_type_annotated * data list
-  | D_map of (comparable_type_annotated * typ_annotated) * (data * data) list
-  (* | D_instruction of inst *)
-  | D_bytes of string
+  | D_none
+  | D_elt of data * data
+  | D_list of data list
 
 and program = { param : typ_annotated; storage : typ_annotated; code : inst }
 
@@ -176,7 +167,7 @@ type parser_data =
   | P_map of (parser_data * parser_data) list
   | P_list of parser_data list
 
-let rec data_of_parser_data (t, _) d =
+(* let rec data_of_parser_data (t, _) d =
   match d with
   | P_int d -> (
       match t with
@@ -241,7 +232,7 @@ let rec data_of_parser_data (t, _) d =
                     data_of_parser_data t_2 v ))
                 d )
       | _ -> assert false )
-  | P_unit -> ( match t with T_unit -> D_unit | _ -> assert false )
+  | P_unit -> ( match t with T_unit -> D_unit | _ -> assert false ) *)
 
 let num_of_string = Z.of_string
 

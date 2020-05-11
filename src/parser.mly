@@ -145,7 +145,7 @@ instruction_d:
   | a=inst_annot(I_SWAP) { I_swap, a }
   | a=inst_annot(I_DIG) n=NUM { I_dig n, a }
   | a=inst_annot(I_DUG) n=NUM { I_dug n, a }
-  | a=inst_annot(I_PUSH) t=typ d=data { I_push (t, data_of_parser_data t d), a }
+  | a=inst_annot(I_PUSH) t=typ d=data { I_push (t, d), a }
   | a=inst_annot(I_SOME)  { I_some, a }
   | a=inst_annot(I_NONE) t=typ  { I_none t, a }
   | a=inst_annot(I_UNIT)  { I_unit , a }
@@ -231,19 +231,16 @@ int:
   | MINUS n=NUM { Z.neg n }
 
 data:
-    n=int { P_int n }
-  | s=STRING  { P_string s }
-  | b=HEX { P_bytes b }
-  | UNIT  { P_unit }
-  | b=BOOLEAN  { P_bool b }
-  | PAIR d_1=data d_2=data  { P_pair (d_1, d_2) }
-  | LEFT d=data { P_left d }
-  | RIGHT d=data  { P_right d }
-  | SOME d=data { P_some d }
-  | NONE  { P_none }
-  | d=delimited(LB, separated_nonempty_list(SEMICOLON, elt), RB) { P_map d }
-  | d=delimited(LB, separated_nonempty_list(SEMICOLON, data), RB) { P_list d }
-  /* | i=instruction { D_instruction i } */
-
-%inline elt:
-  ELT d_1=data d_2=data { d_1, d_2 }
+    n=int { D_int n }
+  | s=STRING  { D_string s }
+  | b=HEX { D_bytes b }
+  | UNIT  { D_unit }
+  | b=BOOLEAN  { D_bool b }
+  | PAIR d_1=data d_2=data  { D_pair (d_1, d_2) }
+  | LEFT d=data { D_left d }
+  | RIGHT d=data  { D_right d }
+  | SOME d=data { D_some d }
+  | NONE  { D_none }
+  | ELT d_1=data d_2=data { D_elt (d_1, d_2) }
+  | d=delimited(LB, separated_nonempty_list(SEMICOLON, data), RB) { D_list d }
+  
