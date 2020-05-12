@@ -85,7 +85,7 @@ and inst =
   | I_dip of inst_annotated
   | I_dip_n of Z.t * inst_annotated
   | I_failwith
-  | I_cast
+  | I_cast of typ_annotated
   | I_rename
   | I_concat
   | I_slice
