@@ -80,7 +80,7 @@ let rec inst fmt =
   | I_update -> print_string "UPDATE"
   | I_exec -> print_string "EXEC"
   | I_failwith -> print_string "FAILWITH"
-  | I_cast -> print_string "CAST"
+  | I_cast (t, _) -> fprintf fmt "CAST %a" typ t
   | I_rename -> print_string "RENAME"
   | I_concat -> print_string "CONCAT"
   | I_slice -> print_string "SLICE"

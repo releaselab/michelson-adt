@@ -177,7 +177,7 @@ instruction_d:
   | a=inst_annot(I_DIP) i=instruction_block { I_dip i, a }
   | a=inst_annot(I_DIP) n=NUM i=instruction_block { I_dip_n (n, i), a }
   | a=inst_annot(I_FAILWITH)  { I_failwith, a }
-  | a=inst_annot(I_CAST)  { I_cast, a }
+  | a=inst_annot(I_CAST) t=typ { I_cast t, a }
   | a=inst_annot(I_RENAME) { I_rename, a }
   | a=inst_annot(I_CONCAT) { I_concat, a }
   | a=inst_annot(I_SLICE) { I_slice, a }
