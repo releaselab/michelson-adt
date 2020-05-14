@@ -58,6 +58,7 @@ and inst =
   | I_none of typ_annotated
   | I_unit
   | I_if_none of inst_annotated * inst_annotated
+  | I_if_some of inst_annotated * inst_annotated
   | I_pair
   | I_car
   | I_cdr

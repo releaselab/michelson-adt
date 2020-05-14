@@ -150,7 +150,7 @@ instruction_d:
   | a=inst_annot(I_NONE) t=typ  { I_none t, a }
   | a=inst_annot(I_UNIT)  { I_unit , a }
   | a=inst_annot(I_IF_NONE) i_1=instruction_block i_2=instruction_block { I_if_none (i_1, i_2), a }
-  | a=inst_annot(I_IF_SOME) i_1=instruction_block i_2=instruction_block { I_if_none (i_2, i_1), a }
+  | a=inst_annot(I_IF_SOME) i_1=instruction_block i_2=instruction_block { I_if_some (i_1, i_2), a }
   | a=inst_annot(I_PAIR)  { I_pair, a }
   | a=inst_annot(I_CAR) { I_car, a }
   | a=inst_annot(I_CDR) { I_cdr, a }
