@@ -37,7 +37,7 @@
     "big_map", T_BIG_MAP; "chain_id", T_CHAIN_ID; "int", T_INT; "nat", T_NAT;
     "string", T_STRING; "bytes", T_BYTES; "mutez", T_MUTEZ; "bool", T_BOOL;
     "key_hash", T_KEY_HASH; "timestamp", T_TIMESTAMP; "address", T_ADDRESS;
-    "IF_SOME", I_IF_SOME ]
+    "IF_SOME", I_IF_SOME; "IF_RIGHT", I_IF_RIGHT ]
 
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }

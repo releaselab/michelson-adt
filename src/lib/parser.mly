@@ -52,7 +52,7 @@
 %token I_STEPS_TO_QUOTA I_SOURCE I_SENDER I_ADDRESS I_CHAIN_ID I_UNPAIR T_KEY
 %token T_UNIT T_SIGNATURE T_OPTION T_LIST T_SET T_OPERATION T_CONTRACT T_PAIR
 %token T_OR T_LAMBDA T_MAP T_BIG_MAP T_CHAIN_ID T_INT T_NAT T_STRING T_BYTES
-%token T_MUTEZ T_BOOL T_KEY_HASH T_TIMESTAMP T_ADDRESS I_IF_SOME
+%token T_MUTEZ T_BOOL T_KEY_HASH T_TIMESTAMP T_ADDRESS I_IF_SOME I_IF_RIGHT
 %token EOF
 
 %start <Adt.program> start
@@ -128,8 +128,7 @@ comparable_type:
   LB i=instruction RB { i }
 
 instruction:
-    { (I_noop, []) }
-  | i=instruction_d { i }
+    i=instruction_d { i }
   | i_1=instruction_d SEMICOLON i_2=instruction { (I_seq (i_1, i_2), []) }
 
 %inline var_annot:
@@ -139,7 +138,8 @@ instruction:
     I a=var_annot* { a }
 
 instruction_d:
-    a=inst_annot(I_DROP)  { (I_drop, a) }
+    { I_noop, [] }
+  | a=inst_annot(I_DROP)  { (I_drop, a) }
   | a=inst_annot(I_DROP) n=NUM { I_drop_n n, a }
   | a=inst_annot(I_DUP) { I_dup, a }
   | a=inst_annot(I_SWAP) { I_swap, a }
@@ -150,13 +150,14 @@ instruction_d:
   | a=inst_annot(I_NONE) t=typ  { I_none t, a }
   | a=inst_annot(I_UNIT)  { I_unit , a }
   | a=inst_annot(I_IF_NONE) i_1=instruction_block i_2=instruction_block { I_if_none (i_1, i_2), a }
-  | a=inst_annot(I_IF_SOME) i_1=instruction_block i_2=instruction_block { I_if_none (i_2, i_1), a }
+  | a=inst_annot(I_IF_SOME) i_1=instruction_block i_2=instruction_block { I_if_some (i_1, i_2), a }
   | a=inst_annot(I_PAIR)  { I_pair, a }
   | a=inst_annot(I_CAR) { I_car, a }
   | a=inst_annot(I_CDR) { I_cdr, a }
   | a=inst_annot(I_LEFT) t=typ  { I_left t, a }
   | a=inst_annot(I_RIGHT) t=typ { I_right t, a }
   | a=inst_annot(I_IF_LEFT) i_1=instruction_block i_2=instruction_block { I_if_left (i_1, i_2), a }
+  | a=inst_annot(I_IF_RIGHT) i_1=instruction_block i_2=instruction_block { I_if_right (i_1, i_2), a }
   | a=inst_annot(I_NIL) t=typ { I_nil t, a }
   | a=inst_annot(I_CONS)  { I_cons, a }
   | a=inst_annot(I_IF_CONS) i_1=instruction_block i_2=instruction_block { I_if_cons (i_1, i_2), a }

@@ -134,6 +134,8 @@ let rec inst fmt =
   | I_none (t, _) -> fprintf fmt "NONE %a" typ t
   | I_if_none ((i_1, _), (i_2, _)) ->
       fprintf fmt "IF_NONE { %a } { %a }" inst i_1 inst i_2
+  | I_if_some ((i_1, _), (i_2, _)) ->
+      fprintf fmt "IF_SOME { %a } { %a }" inst i_1 inst i_2
   | I_left (t, _) -> fprintf fmt "LEFT %a" typ t
   | I_right (t, _) -> fprintf fmt "RIGHT %a" typ t
   | I_if_left ((i_1, _), (i_2, _)) ->

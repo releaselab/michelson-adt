@@ -17,7 +17,9 @@ homepage: "https://gitlab.com/releaselab/fresco/michelson"
 bug-reports: "https://gitlab.com/releaselab/fresco/michelson/issues"
 depends: [
   "dune" {build}
-  "zarith" {dev}
+  "zarith" {build}
+  "alcotest" {with-test}
+  "cmdliner" {with-test}
 ]
 build: [
   ["dune" "subst"] {pinned}

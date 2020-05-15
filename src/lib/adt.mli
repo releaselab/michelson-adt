@@ -58,6 +58,7 @@ and inst =
   | I_none of typ_annotated
   | I_unit
   | I_if_none of inst_annotated * inst_annotated
+  | I_if_some of inst_annotated * inst_annotated
   | I_pair
   | I_car
   | I_cdr
@@ -135,8 +136,6 @@ and inst =
   | I_noop
   | I_unpair
 
-and inst_annotated = inst * string list
-
 and data =
   | D_int of Z.t
   | D_string of string
@@ -150,6 +149,8 @@ and data =
   | D_none
   | D_elt of data * data
   | D_list of data list
+
+and inst_annotated = inst * string list
 
 and program = { param : typ_annotated; storage : typ_annotated; code : inst }
 
@@ -167,73 +168,8 @@ type parser_data =
   | P_map of (parser_data * parser_data) list
   | P_list of parser_data list
 
-(* let rec data_of_parser_data (t, _) d =
-  match d with
-  | P_int d -> (
-      match t with
-      | T_comparable (T_simple_comparable_type T_int) -> D_int d
-      | T_comparable (T_simple_comparable_type T_nat) -> D_nat d
-      | T_comparable (T_simple_comparable_type T_mutez) -> D_mutez d
-      | _ -> assert false )
-  | P_string s -> (
-      match t with
-      | T_comparable (T_simple_comparable_type T_string) -> D_string s
-      | T_comparable (T_simple_comparable_type T_key_hash) -> D_key_hash s
-      | T_comparable (T_simple_comparable_type T_timestamp) -> D_timestamp s
-      | T_comparable (T_simple_comparable_type T_address) -> D_address s
-      | _ -> assert false )
-  | P_bytes s -> (
-      match t with
-      | T_comparable (T_simple_comparable_type T_bytes) -> D_bytes s
-      | _ -> assert false )
-  | P_bool b -> (
-      match t with
-      | T_comparable (T_simple_comparable_type T_bool) -> D_bool b
-      | _ -> assert false )
-  | P_pair (d_1, d_2) -> (
-      match t with
-      | T_comparable (T_comparable_pair ((t_1, a_1), (t_2, a_2))) ->
-          D_pair
-            ( data_of_parser_data
-                (T_comparable (T_simple_comparable_type t_1), a_1)
-                d_1,
-              data_of_parser_data (T_comparable t_2, a_2) d_2 )
-      | T_pair (t_1, t_2) ->
-          D_pair (data_of_parser_data t_1 d_1, data_of_parser_data t_2 d_2)
-      | _ -> assert false )
-  | P_left d -> (
-      match t with
-      | T_or (t, _) -> D_left (data_of_parser_data t d)
-      | _ -> assert false )
-  | P_right d -> (
-      match t with
-      | T_or (_, t) -> D_right (data_of_parser_data t d)
-      | _ -> assert false )
-  | P_some d -> (
-      match t with
-      | T_option t -> D_some (data_of_parser_data t d)
-      | _ -> assert false )
-  | P_none -> ( match t with T_option t -> D_none t | _ -> assert false )
-  | P_list d -> (
-      match t with
-      | T_list t -> D_list (t, List.map (data_of_parser_data t) d)
-      | T_set (t, a) ->
-          let t' = (T_comparable t, a) in
-          D_set ((t, a), List.map (data_of_parser_data t') d)
-      | _ -> assert false )
-  | P_map d -> (
-      match t with
-      | T_map ((t_1, a_1), t_2) ->
-          D_map
-            ( ((t_1, a_1), t_2),
-              List.map
-                (fun (k, v) ->
-                  ( data_of_parser_data (T_comparable t_1, a_1) k,
-                    data_of_parser_data t_2 v ))
-                d )
-      | _ -> assert false )
-  | P_unit -> ( match t with T_unit -> D_unit | _ -> assert false ) *)
+(* val data_of_parser_data : typ_annotated -> parser_data -> data *)
 
-let num_of_string = Z.of_string
+val num_of_string : string -> Z.t
 
-let num_of_int = Z.of_int
+val num_of_int : int -> Z.t
