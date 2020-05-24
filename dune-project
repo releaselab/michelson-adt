@@ -1,4 +1,4 @@
-(lang dune 1.11)
+(lang dune 2.0)
 (name michelson)
 (using menhir 1.0)
 
@@ -16,4 +16,6 @@
  (synopsis "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
   (dune :build)
-  (zarith :dev)))
+  (zarith :build)
+  (alcotest :with-test)
+  (cmdliner :with-test)))

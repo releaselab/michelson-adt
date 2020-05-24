@@ -1,0 +1,11 @@
+(executables
+ (names main)
+ (libraries michelson alcotest cmdliner)
+ (flags -g)
+ (modes byte))
+
+(rule
+ (alias runtest)
+ (action
+  (run ./main.exe -d ../../../../tests/)))
+
