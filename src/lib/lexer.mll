@@ -30,14 +30,14 @@
     "BLAKE2B", I_BLAKE2B; "SHA256", I_SHA256; "SHA512", I_SHA512;
     "HASH_KEY", I_HASH_KEY; "STEPS_TO_QUOTA", I_STEPS_TO_QUOTA;
     "SOURCE", I_SOURCE; "SENDER", I_SENDER; "ADDRESS", I_ADDRESS;
-    "CHAIN_ID", I_CHAIN_ID; "key", T_KEY; "unit", T_UNIT;
+    "CHAIN_ID", I_CHAIN_ID; "UNPAIR", I_UNPAIR; "key", T_KEY; "unit", T_UNIT;
     "signature", T_SIGNATURE;    "option", T_OPTION; "list", T_LIST;
     "set", T_SET; "operation", T_OPERATION; "contract", T_CONTRACT;
     "pair", T_PAIR; "or", T_OR; "lambda", T_LAMBDA; "map", T_MAP;
     "big_map", T_BIG_MAP; "chain_id", T_CHAIN_ID; "int", T_INT; "nat", T_NAT;
     "string", T_STRING; "bytes", T_BYTES; "mutez", T_MUTEZ; "bool", T_BOOL;
     "key_hash", T_KEY_HASH; "timestamp", T_TIMESTAMP; "address", T_ADDRESS;
-    "IF_SOME", I_IF_SOME ]
+    "IF_SOME", I_IF_SOME; "IF_RIGHT", I_IF_RIGHT ]
 
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }
