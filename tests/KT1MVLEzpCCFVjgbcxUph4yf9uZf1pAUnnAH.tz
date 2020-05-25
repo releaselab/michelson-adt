@@ -1,3 +1,0 @@
-parameter address;
-storage bool;
-code { CAR; CONTRACT int; IF_NONE { PUSH bool False } { DROP; PUSH bool True }; NIL operation; PAIR }

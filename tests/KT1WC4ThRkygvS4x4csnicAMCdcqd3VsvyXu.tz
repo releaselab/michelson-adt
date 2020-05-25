@@ -1,3 +1,0 @@
-parameter unit;
-storage signature;
-code { DUP; CDR; SWAP; CAR; DROP; NIL operation; PAIR }

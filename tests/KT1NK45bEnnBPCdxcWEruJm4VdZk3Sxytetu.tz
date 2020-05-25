@@ -1,3 +1,0 @@
-parameter (list (pair nat (pair address nat)));
-storage (list (pair nat (pair address nat)));
-code { CAR; NIL operation; PAIR }

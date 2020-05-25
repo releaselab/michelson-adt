@@ -1,3 +1,0 @@
-parameter (or int unit);
-storage int;
-code { DUP; CDR; SWAP; CAR; IF_LEFT { SWAP; DROP } { DROP }; NIL operation; PAIR }

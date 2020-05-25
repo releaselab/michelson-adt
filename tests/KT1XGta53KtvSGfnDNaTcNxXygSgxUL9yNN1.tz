@@ -1,3 +1,0 @@
-parameter nat;
-storage nat;
-code { DUP; DIP { ; CDR }; DIP { ; DROP }; CAR; NIL operation; PAIR }

@@ -1,0 +1,6 @@
+image: ocaml/opam2
+
+ocaml-4.07:
+    stage: build
+    script:
+        - scripts/ci-build.sh 4.07
