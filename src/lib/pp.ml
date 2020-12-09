@@ -111,7 +111,6 @@ let rec print_inst ch i =
   | I_self -> fprintf ch "SELF"
   | I_transfer_tokens -> fprintf ch "TRANSFER_TOKENS"
   | I_set_delegate -> fprintf ch "SET_DELEGATE"
-  | I_create_account -> fprintf ch "CREATE_ACCOUNT"
   | I_implicit_account -> fprintf ch "IMPLICIT_ACCOUNT"
   | I_now -> fprintf ch "NOW"
   | I_amount -> fprintf ch "AMOUNT"

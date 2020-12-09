@@ -22,21 +22,20 @@
     "ISNAT", I_ISNAT; "INT", I_INT; "NEG", I_NEG; "LSL", I_LSL; "LSR", I_LSR;
     "OR", I_OR; "AND", I_AND; "XOR", I_XOR; "NOT", I_NOT; "COMPARE", I_COMPARE;
     "EQ", I_EQ; "NEQ", I_NEQ; "LT", I_LT; "GT", I_GT; "LE", I_LE; "GE", I_GE;
-    "SELF", I_SELF; "CONTRACT", I_CONTRACT;
+    "SELF", I_SELF; "CONTRACT", I_CONTRACT; "BALANCE", I_BALANCE; "NOW", I_NOW;
     "TRANSFER_TOKENS", I_TRANSFER_TOKENS; "SET_DELEGATE", I_SET_DELEGATE;
-    "CREATE_ACCOUNT", I_CREATE_ACCOUNT; "CREATE_CONTRACT", I_CREATE_CONTRACT;
-    "IMPLICIT_ACCOUNT", I_IMPLICIT_ACCOUNT; "NOW", I_NOW; "AMOUNT", I_AMOUNT;
-    "BALANCE", I_BALANCE; "CHECK_SIGNATURE", I_CHECK_SIGNATURE;
-    "BLAKE2B", I_BLAKE2B; "SHA256", I_SHA256; "SHA512", I_SHA512;
-    "HASH_KEY", I_HASH_KEY; "SOURCE", I_SOURCE; "SENDER", I_SENDER;
-    "ADDRESS", I_ADDRESS; "CHAIN_ID", I_CHAIN_ID; "UNPAIR", I_UNPAIR;
-    "key", T_KEY; "unit", T_UNIT; "signature", T_SIGNATURE;
-    "option", T_OPTION; "list", T_LIST; "set", T_SET; "operation", T_OPERATION;
-    "contract", T_CONTRACT; "pair", T_PAIR; "or", T_OR; "lambda", T_LAMBDA;
-    "map", T_MAP; "big_map", T_BIG_MAP; "chain_id", T_CHAIN_ID; "int", T_INT;
-    "nat", T_NAT; "string", T_STRING; "bytes", T_BYTES; "mutez", T_MUTEZ;
-    "bool", T_BOOL; "key_hash", T_KEY_HASH; "timestamp", T_TIMESTAMP;
-    "address", T_ADDRESS; "IF_SOME", I_IF_SOME; "IF_RIGHT", I_IF_RIGHT ]
+    "CREATE_CONTRACT", I_CREATE_CONTRACT; "AMOUNT", I_AMOUNT;
+    "IMPLICIT_ACCOUNT", I_IMPLICIT_ACCOUNT; "BLAKE2B", I_BLAKE2B;
+    "CHECK_SIGNATURE", I_CHECK_SIGNATURE; "address", T_ADDRESS;
+    "SHA256", I_SHA256; "SHA512", I_SHA512; "HASH_KEY", I_HASH_KEY;
+    "SOURCE", I_SOURCE; "SENDER", I_SENDER; "ADDRESS", I_ADDRESS;
+    "CHAIN_ID", I_CHAIN_ID; "UNPAIR", I_UNPAIR; "key", T_KEY; "unit", T_UNIT;
+    "signature", T_SIGNATURE; "option", T_OPTION; "list", T_LIST; "set", T_SET;
+    "operation", T_OPERATION; "contract", T_CONTRACT; "pair", T_PAIR;
+    "or", T_OR; "lambda", T_LAMBDA; "map", T_MAP; "big_map", T_BIG_MAP;
+    "chain_id", T_CHAIN_ID; "int", T_INT; "nat", T_NAT; "string", T_STRING;
+    "bytes", T_BYTES; "mutez", T_MUTEZ; "bool", T_BOOL; "key_hash", T_KEY_HASH;
+    "timestamp", T_TIMESTAMP; "IF_SOME", I_IF_SOME; "IF_RIGHT", I_IF_RIGHT ]
 
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }

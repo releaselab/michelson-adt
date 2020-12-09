@@ -95,7 +95,6 @@ and inst =
   | I_contract of typ
   | I_transfer_tokens
   | I_set_delegate
-  | I_create_account
   | I_create_contract of program
   | I_implicit_account
   | I_now
