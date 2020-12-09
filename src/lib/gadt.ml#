@@ -1,22 +1,17 @@
-(* type var_annot = [ `Var_annot of string ]
+type n = Nat
 
-type type_annot = [ `Type_annot of string ]
+type z = Int
 
-type field_annot = [ `Field_annot of string ]
+type mutez = Mutez
 
-type annot = [ var_annot | type_annot | field_annot ] *)
-
-type n = N
-
-type z = Z
-
-type _ num = Int : Z.t -> z num | Nat : Z.t -> n num
+type _ num =
+  | N_int : Z.t -> z num
+  | N_nat : Z.t -> n num
+  | N_mutez : Z.t -> mutez num
 
 type address = Address
 
 type signature = Signature
-
-type mutez = Mutez
 
 type key_hash = Key_hash
 
@@ -24,31 +19,48 @@ type key = Key
 
 type timestamp = Timestamp
 
+type _ s_string =
+  | S_string : string -> string s_string
+  | S_address : string -> address s_string
+  | S_signature : string -> signature s_string
+  | S_key_hash : string -> key_hash s_string
+  | S_key : string -> key s_string
+  | S_timestamp : string -> timestamp s_string
+
 type ('a, 'b) pair = Pair of 'a * 'b
 
 type ('a, 'b) union = Or of 'a * 'b
 
+type 'a option = Option of 'a
+
+type ('a, 'b) elt = Elt of 'a * 'b
+
+type 'a t_list = List of 'a
+
 type _ data =
   | D_num : 'a num -> 'a data
-  | D_signature : string -> signature data
-  | D_mutez : n num -> mutez data
-  | D_address : string -> address data
-  | D_key_hash : string -> key_hash data
-  | D_key : string -> key data
-  | D_timestamp : string -> timestamp data
+  | D_string : 'a s_string -> 'a data
+  | D_bytes : string -> bytes data
+  | D_unit : unit data
+  | D_bool : bool -> bool data
   | D_pair : 'a data * 'b data -> ('a, 'b) pair data
   | D_left : 'a * 'b data -> ('a, 'b) union data
   | D_right : 'b * 'a data -> ('a, 'b) union data
+  | D_some : 'a data -> 'a option data
+  | D_none : 'a -> 'a option data
+  | D_elt : 'a data * 'b data -> ('a, 'b) elt data
+  | D_list : 'a data list -> 'a t_list data
 
 let x = D_pair (D_num (Nat Z.one), D_timestamp "x")
 
-let rec what_is_the_type : type a. a data -> a = function
-  | D_num (Nat _) -> N
-  | D_num (Int _) -> Z
-  | D_signature _ -> Signature
-  | D_mutez _ -> Mutez
-  | D_address _ -> Address
-  | D_key_hash _ -> Key_hash
+let rec what_is_the_type : type a. a data -> Adt.typ = function
+  | D_num (Nat _) -> T_nat
+  | D_num (Int _) -> T_int
+  | D_num (Mutez _) -> T_mutez
+  | D_signature _ -> T_signature
+  | D_mutez _ -> T_mutez
+  | D_address _ -> T_address
+  | D_key_hash _ -> T_key_hash
   | D_key _ -> Key
   | D_timestamp _ -> Timestamp
   | D_pair (x, y) -> Pair (what_is_the_type x, what_is_the_type y)

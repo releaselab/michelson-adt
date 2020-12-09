@@ -106,7 +106,6 @@ and inst =
   | I_sha256
   | I_sha512
   | I_hash_key
-  | I_steps_to_quota
   | I_source
   | I_sender
   | I_address

@@ -121,7 +121,6 @@ let rec print_inst ch i =
   | I_sha256 -> fprintf ch "SHA256"
   | I_sha512 -> fprintf ch "SHA512"
   | I_hash_key -> fprintf ch "HASH_KEY"
-  | I_steps_to_quota -> fprintf ch "STEPS_TO_QUOTA"
   | I_source -> fprintf ch "SOURCE"
   | I_sender -> fprintf ch "SENDER"
   | I_address -> fprintf ch "ADDRESS"
