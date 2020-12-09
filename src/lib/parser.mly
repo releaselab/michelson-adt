@@ -23,9 +23,6 @@
   
   (*let instruction_list_to_seq =
     List.fold_left (fun acc i -> create_node ~loc:acc.loc (Inst (I_seq (acc, i)))) (create_node (Inst I_noop))*)
-  let pos (startpos, endpos) =
-    let open Lexing in
-    Location.Pos ({lin=startpos.pos_lnum; col=startpos.pos_cnum}, {lin=endpos.pos_lnum; col=endpos.pos_cnum})
 
 %}
 
@@ -78,9 +75,6 @@ parameter:
     t=typ { t }
 
 typ:
-  t=typ_t { { d=t; pos=pos ($loc(t)) } }
-
-typ_t:
     T_KEY                           { T_key }
   | T_UNIT                          { T_unit }
   | T_SIGNATURE                     { T_signature }
@@ -110,12 +104,9 @@ typ_t:
 
 instruction:
     i=instruction_d { i }
-  | i_1=instruction_d SEMICOLON i_2=instruction { { d=I_seq (i_1, i_2); pos=Location.Unknown } }
+  | i_1=instruction_d SEMICOLON i_2=instruction { I_seq (i_1, i_2) }
 
 instruction_d:
-  i=instruction_d_t { { d=i; pos=pos ($loc(i)) } }
-
-instruction_d_t:
     { I_noop }
   | I_DROP  { I_drop }
   | I_DROP n=NUM { I_drop_n n }
@@ -209,10 +200,7 @@ int:
   | MINUS n=NUM { Z.neg n }
 
 data:
-  d=data_t { { d=d; pos=pos ($loc(d)) } }
-
-data_t:
-    LP d=data_t RP { d }
+    LP d=data RP { d }
   | n=int { D_int n }
   | s=STRING  { D_string s }
   | b=HEX { D_bytes b }

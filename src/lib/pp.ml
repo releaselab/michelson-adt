@@ -17,7 +17,7 @@ let string_of_list f l =
 
 let rec string_of_data d =
   let open Printf in
-  match d.d with
+  match d with
   | D_int d -> Z.to_string d
   | D_string s | D_bytes s -> sprintf "\"%s\"" s
   | D_elt (d_1, d_2) ->
@@ -34,7 +34,7 @@ let rec string_of_data d =
 
 let rec string_of_typ t =
   let open Printf in
-  match t.d with
+  match t with
   | T_int -> "int"
   | T_nat -> "nat"
   | T_string -> "string"
@@ -66,7 +66,7 @@ let rec string_of_typ t =
 
 let rec print_inst ch i =
   let open Printf in
-  match i.d with
+  match i with
   | I_abs -> fprintf ch "ABS"
   | I_drop -> fprintf ch "DROP"
   | I_dup -> fprintf ch "DUP"
