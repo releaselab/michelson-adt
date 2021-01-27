@@ -7,30 +7,13 @@ let string_of_list f l =
       | [] -> ""
       | h :: tl ->
           aux
-            ( if String.length acc > 0 then sprintf "%s; %s" acc (f h)
-            else sprintf "%s" (f h) )
+            (if String.length acc > 0 then sprintf "%s; %s" acc (f h)
+            else sprintf "%s" (f h))
             tl
     in
     aux "" l
   in
   "[ " ^ values ^ " ]"
-
-let rec string_of_data d =
-  let open Printf in
-  match d with
-  | D_int d -> Z.to_string d
-  | D_string s | D_bytes s -> sprintf "\"%s\"" s
-  | D_elt (d_1, d_2) ->
-      sprintf "Elt %s %s" (string_of_data d_1) (string_of_data d_2)
-  | D_left d -> sprintf "Left %s" (string_of_data d)
-  | D_right d -> sprintf "Right %s" (string_of_data d)
-  | D_some d -> sprintf "Some %s" (string_of_data d)
-  | D_none -> sprintf "None"
-  | D_unit -> sprintf "Unit"
-  | D_bool b -> sprintf (match b with true -> "True" | false -> "False")
-  | D_pair (d_1, d_2) ->
-      sprintf "(Pair %s %s)" (string_of_data d_1) (string_of_data d_2)
-  | D_list d -> string_of_list string_of_data d
 
 let rec string_of_typ t =
   let open Printf in
@@ -64,7 +47,26 @@ let rec string_of_typ t =
       sprintf "(big_map %s %s)" (string_of_typ t_1) (string_of_typ t_2)
   | T_chain_id -> sprintf "chain_id"
 
-let rec print_inst ch i =
+let rec string_of_data d =
+  let open Printf in
+  match d with
+  | D_int d -> Z.to_string d
+  | D_string s | D_bytes s -> sprintf "\"%s\"" s
+  | D_elt (d_1, d_2) ->
+      sprintf "Elt %s %s" (string_of_data d_1) (string_of_data d_2)
+  | D_left d -> sprintf "Left %s" (string_of_data d)
+  | D_right d -> sprintf "Right %s" (string_of_data d)
+  | D_some d -> sprintf "Some %s" (string_of_data d)
+  | D_none -> sprintf "None"
+  | D_unit -> sprintf "Unit"
+  | D_bool b -> sprintf (match b with true -> "True" | false -> "False")
+  | D_pair (d_1, d_2) ->
+      sprintf "(Pair %s %s)" (string_of_data d_1) (string_of_data d_2)
+  | D_list d -> string_of_list string_of_data d
+  | D_instruction _ -> ""
+
+(* TODO: *)
+and print_inst ch i =
   let open Printf in
   match i with
   | I_abs -> fprintf ch "ABS"
@@ -166,6 +168,7 @@ let rec print_inst ch i =
   | I_unpack t -> fprintf ch "UNPACK %s" (string_of_typ t)
   | I_contract t -> fprintf ch "CONTRACT %s" (string_of_typ t)
   | I_create_contract p -> fprintf ch "CREATE_CONTRACT { %a }" program p
+  | I_apply -> fprintf ch "APPLY"
 
 and program fmt { code; param; storage } =
   let open Printf in
