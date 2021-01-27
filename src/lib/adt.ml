@@ -1,4 +1,4 @@
-type typ =
+type typ_t =
   | T_key
   | T_unit
   | T_signature
@@ -23,10 +23,12 @@ type typ =
   | T_timestamp
   | T_address
 
-and inst =
+and typ = Location.t * typ_t
+
+and inst_t =
   | I_noop
   | I_failwith
-  | I_seq of inst * inst
+  | I_seq of inst list
   | I_if of inst * inst
   | I_loop of inst
   | I_loop_left of inst
@@ -113,10 +115,12 @@ and inst =
   | I_unpair
   | I_rename
 
-and data =
+and inst = Location.t * inst_t
+
+and data_t =
   | D_int of Z.t
   | D_string of string
-  | D_bytes of string
+  | D_bytes of Bytes.t
   | D_unit
   | D_bool of bool
   | D_pair of data * data
@@ -128,17 +132,21 @@ and data =
   | D_list of data list
   | D_instruction of inst
 
+and data = Location.t * data_t
+
 and program = { param : typ; storage : typ; code : inst }
 
 let rec is_comparable_type =
-  let is_simple_comparable_type = function
+  let is_simple_comparable_type (_, t) =
+    match t with
     | T_int | T_nat | T_string | T_bytes | T_mutez | T_bool | T_key_hash
     | T_timestamp | T_address ->
         true
     | _ -> false
   in
   function
-  | T_pair (t_1, t_2) -> is_simple_comparable_type t_1 && is_comparable_type t_2
+  | _, T_pair (t_1, t_2) ->
+      is_simple_comparable_type t_1 && is_comparable_type t_2
   | t -> is_simple_comparable_type t
 
 (* let rec data_of_parser_data (t, _) d =
@@ -212,7 +220,7 @@ let num_of_string = Z.of_string
 
 let num_of_int = Z.of_int
 
-let rec assert_type d t =
+let rec assert_type (_, d) (_, t) =
   match (d, t) with
   | D_int _, (T_int | T_nat | T_mutez)
   | D_unit, T_unit
@@ -230,7 +238,7 @@ let rec assert_type d t =
   | D_list l, (T_list t' | T_set t') ->
       List.for_all (fun d' -> assert_type d' t') l
   | D_list l, (T_map (k, v) | T_big_map (k, v)) ->
-      let assert_type_map d k v =
+      let assert_type_map (_, d) k v =
         match d with
         | D_elt (d_k, d_v) -> assert_type d_k k && assert_type d_v v
         | _ -> false

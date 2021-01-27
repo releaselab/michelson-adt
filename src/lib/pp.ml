@@ -15,7 +15,7 @@ let string_of_list f l =
   in
   "[ " ^ values ^ " ]"
 
-let rec string_of_typ t =
+let rec string_of_typ (_, t) =
   let open Printf in
   match t with
   | T_int -> "int"
@@ -47,11 +47,12 @@ let rec string_of_typ t =
       sprintf "(big_map %s %s)" (string_of_typ t_1) (string_of_typ t_2)
   | T_chain_id -> sprintf "chain_id"
 
-let rec string_of_data d =
+let rec string_of_data (_, d) =
   let open Printf in
   match d with
   | D_int d -> Z.to_string d
-  | D_string s | D_bytes s -> sprintf "\"%s\"" s
+  | D_string s -> sprintf "\"%s\"" s
+  | D_bytes b -> sprintf "%s" (Bytes.to_string b)
   | D_elt (d_1, d_2) ->
       sprintf "Elt %s %s" (string_of_data d_1) (string_of_data d_2)
   | D_left d -> sprintf "Left %s" (string_of_data d)
@@ -66,7 +67,7 @@ let rec string_of_data d =
   | D_instruction _ -> ""
 
 (* TODO: *)
-and print_inst ch i =
+and print_inst ch (_, i) =
   let open Printf in
   match i with
   | I_abs -> fprintf ch "ABS"
@@ -128,7 +129,7 @@ and print_inst ch i =
   | I_chain_id -> fprintf ch "CHAIN_ID"
   | I_noop -> fprintf ch ""
   | I_unpair -> fprintf ch "UNPAIR"
-  | I_seq (i_1, i_2) -> fprintf ch "%a; %a" print_inst i_1 print_inst i_2
+  | I_seq _ -> fprintf ch "" (* TODO: *)
   | I_drop_n n when n = Z.one -> fprintf ch "DROP"
   | I_drop_n n -> fprintf ch "DROP %s" (Z.to_string n)
   | I_dig n -> fprintf ch "DIG %s" (Z.to_string n)

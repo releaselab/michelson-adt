@@ -1,4 +1,4 @@
-type typ =
+type typ_t =
   | T_key
   | T_unit
   | T_signature
@@ -23,10 +23,12 @@ type typ =
   | T_timestamp
   | T_address
 
-and inst =
+and typ = Location.t * typ_t
+
+and inst_t =
   | I_noop
   | I_failwith
-  | I_seq of inst * inst
+  | I_seq of inst list
   | I_if of inst * inst
   | I_loop of inst
   | I_loop_left of inst
@@ -113,10 +115,12 @@ and inst =
   | I_unpair
   | I_rename
 
-and data =
+and inst = Location.t * inst_t
+
+and data_t =
   | D_int of Z.t
   | D_string of string
-  | D_bytes of string
+  | D_bytes of Bytes.t
   | D_unit
   | D_bool of bool
   | D_pair of data * data
@@ -127,6 +131,8 @@ and data =
   | D_elt of data * data
   | D_list of data list
   | D_instruction of inst
+
+and data = Location.t * data_t
 
 and program = { param : typ; storage : typ; code : inst }
 
