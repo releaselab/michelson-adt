@@ -47,6 +47,7 @@ let rec typ token =
     let open Micheline in
     match token with
     | Prim (_, "unit", [], _) -> T_unit
+    | Prim (_, "never", [], _) -> T_never
     | Prim (_, "bool", [], _) -> T_bool
     | Prim (_, "int", [], _) -> T_int
     | Prim (_, "nat", [], _) -> T_nat
@@ -66,10 +67,17 @@ let rec typ token =
     | Prim (_, "set", [ t ], _) -> T_set (typ t)
     | Prim (_, "operation", [], _) -> T_operation
     | Prim (_, "contract", [ t ], _) -> T_contract (typ t)
+    | Prim (_, "ticket", [ t ], _) -> T_ticket (typ t)
     | Prim (_, "lambda", [ t_1; t_2 ], _) -> T_lambda (typ t_1, typ t_2)
     | Prim (_, "big_map", [ t_1; t_2 ], _) -> T_big_map (typ t_1, typ t_2)
     | Prim (_, "map", [ t_1; t_2 ], _) -> T_map (typ t_1, typ t_2)
-    | _ -> error token
+    | Prim (_, "bls12_381_g1", _, _) -> T_bls12_381_g1
+    | Prim (_, "bls12_381_g2", _, _) -> T_bls12_381_g2
+    | Prim (_, "bls12_381_fr", _, _) -> T_bls12_381_fr
+    | Prim (_, "sapling_transaction", [ Int (_, n) ], _) ->
+        T_sapling_transaction n
+    | Prim (_, "sapling_state", [ Int (_, n) ], _) -> T_sapling_state n
+    | t -> error t
   in
   match token with
   | Prim (_, _, _, l) -> (token_location token, t, List.map get_annot l)
@@ -198,6 +206,25 @@ and inst token =
     | Prim (_, "CHECK_SIGNATURE", [], _) -> I_check_signature
     | Prim (_, "CAST", [ t ], _) -> I_cast (typ t)
     | Prim (_, "UNPAIR", [], _) -> I_unpair
+    | Prim (_, "NEVER", [], _) -> I_never
+    | Prim (_, "SELF_ADDRESS", [], _) -> I_self_address
+    | Prim (_, "VOTING_POWER", [], _) -> I_voting_power
+    | Prim (_, "LEVEL", [], _) -> I_level
+    | Prim (_, "KECCAK", [], _) -> I_keccak
+    | Prim (_, "SHA3", [], _) -> I_sha3
+    | Prim (_, "TOTAL_VOTING_POWER", [], _) -> I_total_voting_power
+    | Prim (_, "PAIRING_CHECK", [], _) -> I_pairing_check
+    | Prim (_, "SAPLING_VERIFY_UPDATE", [], _) -> I_sapling_verify_update
+    | Prim (_, "TICKET", [], _) -> I_ticket
+    | Prim (_, "READ_TICKET", [], _) -> I_read_ticket
+    | Prim (_, "SPLIT_TICKET", [], _) -> I_split_ticket
+    | Prim (_, "JOIN_TICKETS", [], _) -> I_join_tickets
+    | Prim (_, "DUP", [ Int (_, n) ], _) -> I_dup_n n
+    | Prim (_, "PAIR", [ Int (_, n) ], _) -> I_pair_n n
+    | Prim (_, "GET", [ Int (_, n) ], _) -> I_get_n n
+    | Prim (_, "UPDATE", [ Int (_, n) ], _) -> I_update_n n
+    | Prim (_, "SAPLING_EMPTY_STATE", [ Int (_, n) ], _) ->
+        I_sapling_empty_state n
     | t -> error t
   in
   match token with

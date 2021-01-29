@@ -46,6 +46,13 @@ let rec string_of_typ (_, t, _) =
   | T_big_map (t_1, t_2) ->
       sprintf "(big_map %s %s)" (string_of_typ t_1) (string_of_typ t_2)
   | T_chain_id -> "chain_id"
+  | T_never -> "never"
+  | T_bls12_381_g1 -> "bls12_381_g1"
+  | T_bls12_381_g2 -> "bls12_381_g2"
+  | T_bls12_381_fr -> "bls12_381_fr"
+  | T_ticket t -> sprintf "ticket %s" (string_of_typ t)
+  | T_sapling_transaction n -> sprintf "sapling_transaction %s" (Z.to_string n)
+  | T_sapling_state n -> sprintf "sapling_state %s" (Z.to_string n)
 
 let rec string_of_data (_, d) =
   let open Printf in
@@ -166,6 +173,26 @@ and print_inst ch (_, i, _) =
   | I_contract t -> fprintf ch "CONTRACT %s" (string_of_typ t)
   | I_create_contract p -> fprintf ch "CREATE_CONTRACT { %a }" program p
   | I_apply -> fprintf ch "APPLY"
+  | I_never -> fprintf ch "NEVER"
+  | I_self_address -> fprintf ch "SELF_ADDRESS"
+  | I_voting_power -> fprintf ch "VOTING_POWER"
+  | I_level -> fprintf ch "LEVEL"
+  | I_keccak -> fprintf ch "KECCAK"
+  | I_sha3 -> fprintf ch "SHA3"
+  | I_total_voting_power -> fprintf ch "TOTAL_VOTING_POWER"
+  | I_pairing_check -> fprintf ch "PAIRING_CHECK"
+  | I_sapling_verify_update -> fprintf ch "SAPLING_VERIFY_UPDATE"
+  | I_ticket -> fprintf ch "TICKET"
+  | I_read_ticket -> fprintf ch "READ_TICKET"
+  | I_split_ticket -> fprintf ch "SPLIT_TICKET"
+  | I_join_tickets -> fprintf ch "JOIN_TICKETS"
+  | I_dup_n n -> fprintf ch "DUP %s" (Z.to_string n)
+  | I_pair_n n -> fprintf ch "PAIR %s" (Z.to_string n)
+  | I_unpair_n n -> fprintf ch "UNPAIR %s" (Z.to_string n)
+  | I_get_n n -> fprintf ch "GET %s" (Z.to_string n)
+  | I_update_n n -> fprintf ch "UPDATE %s" (Z.to_string n)
+  | I_sapling_empty_state n ->
+      fprintf ch "SAPLING_EMPTY_STATE %s" (Z.to_string n)
 
 and program fmt { code; param; storage } =
   let open Printf in

@@ -24,6 +24,13 @@ type ('l, 'a) typ_t =
   | T_key_hash
   | T_timestamp
   | T_address
+  | T_never
+  | T_ticket of ('l, 'a) typ
+  | T_bls12_381_g1
+  | T_bls12_381_g2
+  | T_bls12_381_fr
+  | T_sapling_transaction of Z.t
+  | T_sapling_state of Z.t
 
 and ('l, 'a) typ = 'l * ('l, 'a) typ_t * 'a
 
@@ -41,6 +48,7 @@ and ('l, 'a) inst_t =
   | I_drop
   | I_drop_n of Z.t
   | I_dup
+  | I_dup_n of Z.t
   | I_swap
   | I_dig of Z.t
   | I_dug of Z.t
@@ -102,18 +110,36 @@ and ('l, 'a) inst_t =
   | I_self
   | I_amount
   | I_implicit_account
+  | I_voting_power
   | I_now
   | I_chain_id
   | I_pack
   | I_unpack of ('l, 'a) typ
   | I_hash_key
   | I_blake2b
+  | I_keccak
+  | I_sha3
   | I_sha256
   | I_sha512
   | I_check_signature
   | I_cast of ('l, 'a) typ
   | I_unpair
   | I_rename
+  | I_total_voting_power
+  | I_pairing_check
+  | I_sapling_empty_state of Z.t
+  | I_sapling_verify_update
+  | I_ticket
+  | I_read_ticket
+  | I_split_ticket
+  | I_join_tickets
+  | I_never
+  | I_self_address
+  | I_level
+  | I_pair_n of Z.t
+  | I_unpair_n of Z.t
+  | I_get_n of Z.t
+  | I_update_n of Z.t
 
 and ('l, 'a) inst = 'l * ('l, 'a) inst_t * 'a
 
