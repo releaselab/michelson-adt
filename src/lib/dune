@@ -1,12 +1,7 @@
 (library
-    (name michelson)
-    (public_name michelson)
-    (libraries zarith)
-    (modules_without_implementation location))
-
-(menhir
-    (modules parser)
-    (flags --explain))
-    
-(ocamllex lexer)
-
+ (name michelson)
+ (public_name michelson)
+ (libraries zarith tezos-micheline)
+ (modules_without_implementation location)
+ (instrumentation
+  (backend bisect_ppx)))

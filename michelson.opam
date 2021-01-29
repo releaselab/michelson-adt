@@ -8,12 +8,15 @@ license: "MIT"
 homepage: "https://gitlab.com/releaselab/fresco/michelson"
 bug-reports: "https://gitlab.com/releaselab/fresco/michelson/issues"
 depends: [
-  "dune" {build}
-  "zarith" {build}
-  "menhir" {build}
+  "dune" {>= "2.7" & build & >= "2.7"}
+  "zarith"
+  "tezos-micheline" {>= "7.0"}
+  "bisect_ppx" {dev & >= "2.5.0"}
+  "alcotest" {dev}
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

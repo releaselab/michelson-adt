@@ -1,8 +1,6 @@
-(lang dune 2.0)
+(lang dune 2.7)
 
 (name michelson)
-
-(using menhir 1.0)
 
 (generate_opam_files true)
 
@@ -22,8 +20,17 @@
 (package
  (name michelson)
  (synopsis
-   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
+  "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
-  (dune :build)
-  (zarith :build)
-  (menhir :build)))
+  (dune
+   (and
+    :build
+    (>= 2.7)))
+  zarith
+  (tezos-micheline
+   (>= 7.0))
+  (bisect_ppx
+   (and
+    :dev
+    (>= 2.5.0)))
+  (alcotest :dev)))
