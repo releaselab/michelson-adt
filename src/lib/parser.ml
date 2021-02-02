@@ -77,7 +77,7 @@ let rec typ token =
     | Prim (_, "sapling_transaction", [ Int (_, n) ], _) ->
         T_sapling_transaction n
     | Prim (_, "sapling_state", [ Int (_, n) ], _) -> T_sapling_state n
-    | t -> error t
+    | _ -> error token
   in
   match token with
   | Prim (_, _, _, l) -> (token_location token, t, List.map get_annot l)
