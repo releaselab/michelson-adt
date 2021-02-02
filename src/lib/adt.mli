@@ -1,19 +1,19 @@
 type annot = A_type of string | A_var of string | A_field of string
 
-type typ_t =
+type ('l, 'a) typ_t =
   | T_key
   | T_unit
   | T_signature
-  | T_option of typ
-  | T_list of typ
-  | T_set of typ
+  | T_option of ('l, 'a) typ
+  | T_list of ('l, 'a) typ
+  | T_set of ('l, 'a) typ
   | T_operation
-  | T_contract of typ
-  | T_pair of typ * typ
-  | T_or of typ * typ
-  | T_lambda of typ * typ
-  | T_map of typ * typ
-  | T_big_map of typ * typ
+  | T_contract of ('l, 'a) typ
+  | T_pair of ('l, 'a) typ * ('l, 'a) typ
+  | T_or of ('l, 'a) typ * ('l, 'a) typ
+  | T_lambda of ('l, 'a) typ * ('l, 'a) typ
+  | T_map of ('l, 'a) typ * ('l, 'a) typ
+  | T_big_map of ('l, 'a) typ * ('l, 'a) typ
   | T_chain_id
   | T_int
   | T_nat
@@ -25,17 +25,17 @@ type typ_t =
   | T_timestamp
   | T_address
 
-and typ = Location.t * typ_t * annot list
+and ('l, 'a) typ = 'l * ('l, 'a) typ_t * 'a
 
-and inst_t =
+and ('l, 'a) inst_t =
   | I_noop
   | I_failwith
-  | I_seq of inst list
-  | I_if of inst * inst
-  | I_loop of inst
-  | I_loop_left of inst
-  | I_dip of inst
-  | I_dip_n of Z.t * inst
+  | I_seq of ('l, 'a) inst list
+  | I_if of ('l, 'a) inst * ('l, 'a) inst
+  | I_loop of ('l, 'a) inst
+  | I_loop_left of ('l, 'a) inst
+  | I_dip of ('l, 'a) inst
+  | I_dip_n of Z.t * ('l, 'a) inst
   | I_exec
   | I_apply
   | I_drop
@@ -44,9 +44,9 @@ and inst_t =
   | I_swap
   | I_dig of Z.t
   | I_dug of Z.t
-  | I_push of typ * data
+  | I_push of ('l, 'a) typ * ('l, 'a) data
   | I_unit
-  | I_lambda of typ * typ * inst
+  | I_lambda of ('l, 'a) typ * ('l, 'a) typ * ('l, 'a) inst
   | I_eq
   | I_neq
   | I_lt
@@ -74,29 +74,29 @@ and inst_t =
   | I_pair
   | I_car
   | I_cdr
-  | I_empty_set of typ
+  | I_empty_set of ('l, 'a) typ
   | I_mem
   | I_update
-  | I_iter of inst
-  | I_empty_map of typ * typ
+  | I_iter of ('l, 'a) inst
+  | I_empty_map of ('l, 'a) typ * ('l, 'a) typ
   | I_get
-  | I_map of inst
-  | I_empty_big_map of typ * typ
+  | I_map of ('l, 'a) inst
+  | I_empty_big_map of ('l, 'a) typ * ('l, 'a) typ
   | I_some
-  | I_none of typ
-  | I_if_none of inst * inst
-  | I_left of typ
-  | I_right of typ
-  | I_if_left of inst * inst
+  | I_none of ('l, 'a) typ
+  | I_if_none of ('l, 'a) inst * ('l, 'a) inst
+  | I_left of ('l, 'a) typ
+  | I_right of ('l, 'a) typ
+  | I_if_left of ('l, 'a) inst * ('l, 'a) inst
   | I_cons
-  | I_nil of typ
-  | I_if_cons of inst * inst
-  | I_create_contract of program
+  | I_nil of ('l, 'a) typ
+  | I_if_cons of ('l, 'a) inst * ('l, 'a) inst
+  | I_create_contract of ('l, 'a) program
   | I_transfer_tokens
   | I_set_delegate
   | I_balance
   | I_address
-  | I_contract of typ
+  | I_contract of ('l, 'a) typ
   | I_source
   | I_sender
   | I_self
@@ -105,33 +105,37 @@ and inst_t =
   | I_now
   | I_chain_id
   | I_pack
-  | I_unpack of typ
+  | I_unpack of ('l, 'a) typ
   | I_hash_key
   | I_blake2b
   | I_sha256
   | I_sha512
   | I_check_signature
-  | I_cast of typ
+  | I_cast of ('l, 'a) typ
   | I_unpair
   | I_rename
 
-and inst = Location.t * inst_t * annot list
+and ('l, 'a) inst = 'l * ('l, 'a) inst_t * 'a
 
-and data_t =
+and ('l, 'a) data_t =
   | D_int of Z.t
   | D_string of string
   | D_bytes of Bytes.t
   | D_unit
   | D_bool of bool
-  | D_pair of data * data
-  | D_left of data
-  | D_right of data
-  | D_some of data
+  | D_pair of ('l, 'a) data * ('l, 'a) data
+  | D_left of ('l, 'a) data
+  | D_right of ('l, 'a) data
+  | D_some of ('l, 'a) data
   | D_none
-  | D_elt of data * data
-  | D_list of data list
-  | D_instruction of inst
+  | D_elt of ('l, 'a) data * ('l, 'a) data
+  | D_list of ('l, 'a) data list
+  | D_instruction of ('l, 'a) inst
 
-and data = Location.t * data_t
+and ('l, 'a) data = 'l * ('l, 'a) data_t
 
-and program = { param : typ; storage : typ; code : inst }
+and ('l, 'a) program = {
+  param : ('l, 'a) typ;
+  storage : ('l, 'a) typ;
+  code : ('l, 'a) inst;
+}
