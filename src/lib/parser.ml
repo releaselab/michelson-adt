@@ -75,7 +75,7 @@ let rec typ token =
   | Prim (_, _, _, l) -> (token_location token, t, List.map get_annot l)
   | _ -> assert false
 
-let rec data token =
+let rec data (_, typ, _) token =
   let t =
     let open Micheline in
     match token with
@@ -85,24 +85,38 @@ let rec data token =
     | Prim (_, "Unit", [], _) -> D_unit
     | Prim (_, "True", [], _) -> D_bool true
     | Prim (_, "False", [], _) -> D_bool false
-    | Prim (_, "Pair", [ d_1; d_2 ], _) -> D_pair (data d_1, data d_2)
-    | Prim (_, "Left", [ d ], _) -> D_left (data d)
-    | Prim (_, "Right", [ d ], _) -> D_right (data d)
-    | Prim (_, "Some", [ d ], _) -> D_some (data d)
-    | Prim (_, "None", [], _) -> D_none
-    | Prim (_, "Elt", [ d_1; d_2 ], _) -> D_elt (data d_1, data d_2)
-    | Prim _ as i -> D_instruction (inst i)
-    | Seq (_, l) ->
-        let l_d = List.map data l in
-        if List.for_all (function _, D_instruction _ -> true | _ -> false) l_d
-        then
-          let l_i =
-            List.map
-              (function _, D_instruction i -> i | _ -> assert false)
-              l_d
-          in
-          D_instruction (token_location token, I_seq l_i, [])
-        else D_list l_d
+    | Prim (_, "Pair", [ d_1; d_2 ], _) -> (
+        match typ with
+        | T_pair (t_1, t_2) -> D_pair (data t_1 d_1, data t_2 d_2)
+        | _ -> assert false )
+    | Prim (_, "Left", [ d ], _) -> (
+        match typ with T_or (t, _) -> D_left (data t d) | _ -> assert false )
+    | Prim (_, "Right", [ d ], _) -> (
+        match typ with T_or (_, t) -> D_right (data t d) | _ -> assert false )
+    | Prim (_, "Some", [ d ], _) -> (
+        match typ with T_option t -> D_some (data t d) | _ -> assert false )
+    | Prim (_, "None", [], _) -> (
+        match typ with T_option _ -> D_none | _ -> assert false )
+    | Prim _ as i -> (
+        match typ with
+        | T_lambda _ -> D_instruction (inst i)
+        | _ -> assert false )
+    | Seq (_, l) -> (
+        match typ with
+        | T_list t | T_set t -> D_list (List.map (data t) l)
+        | T_map (t_1, t_2) | T_big_map (t_1, t_2) ->
+            D_list (List.map (data_elt t_1 t_2) l)
+        | T_lambda _ -> D_instruction (inst token)
+        | _ -> assert false )
+  in
+  (token_location token, t)
+
+and data_elt typ_1 typ_2 token =
+  let t =
+    let open Micheline in
+    match token with
+    | Prim (_, "Elt", [ d_1; d_2 ], _) -> D_elt (data typ_1 d_1, data typ_2 d_2)
+    | _ -> assert false
   in
   (token_location token, t)
 
@@ -126,7 +140,9 @@ and inst token =
     | Prim (_, "SWAP", [], _) -> I_swap
     | Prim (_, "DIG", [ Int (_, n) ], _) -> I_dig n
     | Prim (_, "DUG", [ Int (_, n) ], _) -> I_dug n
-    | Prim (_, "PUSH", [ t; d ], _) -> I_push (typ t, data d)
+    | Prim (_, "PUSH", [ t; d ], _) ->
+        let t = typ t in
+        I_push (t, data t d)
     | Prim (_, "UNIT", [], _) -> I_unit
     | Prim (_, "LAMBDA", [ t_1; t_2; i ], _) ->
         I_lambda (typ t_1, typ t_2, inst i)
