@@ -22,15 +22,13 @@
  (synopsis
   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
-  (dune
-   (and
-    :build
-    (>= 2.7)))
+  (dune :build)
   zarith
   (tezos-micheline
    (>= 7.0))
   (bisect_ppx
    (and
-    :dev
+    :with-test
     (>= 2.5.0)))
-  (alcotest :dev)))
+  (alcotest :with-test)
+  (ppx_inline_test :with-test)))
