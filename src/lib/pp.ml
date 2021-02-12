@@ -1,174 +1,149 @@
 open Adt
+open Format
 
-let string_of_list f l =
-  let open Printf in
-  let values =
-    let rec aux acc = function
-      | [] -> ""
-      | h :: tl ->
-          aux
-            ( if String.length acc > 0 then sprintf "%s; %s" acc (f h)
-            else sprintf "%s" (f h) )
-            tl
-    in
-    aux "" l
-  in
-  "[ " ^ values ^ " ]"
+let pp_print_list f ppf =
+  fprintf ppf "{ %a }" (pp_print_list ~pp_sep:(fun fmt () -> fprintf fmt ";") f)
 
-let rec string_of_typ (_, t, _) =
-  let open Printf in
+let rec pp_typ ppf (_, t, _) =
   match t with
-  | T_int -> "int"
-  | T_nat -> "nat"
-  | T_string -> "string"
-  | T_bytes -> "bytes"
-  | T_mutez -> "mutez"
-  | T_bool -> "bool"
-  | T_key_hash -> "key_hash"
-  | T_timestamp -> "timestamp"
-  | T_address -> "address"
-  | T_key -> "key"
-  | T_unit -> "unit"
-  | T_signature -> "signature"
-  | T_option t -> sprintf "(option %s)" (string_of_typ t)
-  | T_list t -> sprintf "(list %s)" (string_of_typ t)
-  | T_set t -> sprintf "(set %s)" (string_of_typ t)
-  | T_operation -> "operation"
-  | T_contract t -> sprintf "(contract %s)" (string_of_typ t)
-  | T_pair (t_1, t_2) ->
-      sprintf "(pair %s %s)" (string_of_typ t_1) (string_of_typ t_2)
-  | T_or (t_1, t_2) ->
-      sprintf "(or %s %s)" (string_of_typ t_1) (string_of_typ t_2)
-  | T_lambda (t_1, t_2) ->
-      sprintf "(lambda %s %s)" (string_of_typ t_1) (string_of_typ t_2)
-  | T_map (t_1, t_2) ->
-      sprintf "(map %s %s)" (string_of_typ t_1) (string_of_typ t_2)
-  | T_big_map (t_1, t_2) ->
-      sprintf "(big_map %s %s)" (string_of_typ t_1) (string_of_typ t_2)
-  | T_chain_id -> "chain_id"
+  | T_int -> fprintf ppf "int"
+  | T_nat -> fprintf ppf "nat"
+  | T_string -> fprintf ppf "string"
+  | T_bytes -> fprintf ppf "bytes"
+  | T_mutez -> fprintf ppf "mutez"
+  | T_bool -> fprintf ppf "bool"
+  | T_key_hash -> fprintf ppf "key_hash"
+  | T_timestamp -> fprintf ppf "timestamp"
+  | T_address -> fprintf ppf "address"
+  | T_key -> fprintf ppf "key"
+  | T_unit -> fprintf ppf "unit"
+  | T_signature -> fprintf ppf "signature"
+  | T_option t -> fprintf ppf "(option %a)" pp_typ t
+  | T_list t -> fprintf ppf "(list %a)" pp_typ t
+  | T_set t -> fprintf ppf "(set %a)" pp_typ t
+  | T_operation -> fprintf ppf "%s" "operation"
+  | T_contract t -> fprintf ppf "(contract %a)" pp_typ t
+  | T_pair (t_1, t_2) -> fprintf ppf "(pair %a %a)" pp_typ t_1 pp_typ t_2
+  | T_or (t_1, t_2) -> fprintf ppf "(or %a %a)" pp_typ t_1 pp_typ t_2
+  | T_lambda (t_1, t_2) -> fprintf ppf "(lambda %a %a)" pp_typ t_1 pp_typ t_2
+  | T_map (t_1, t_2) -> fprintf ppf "(map %a %a)" pp_typ t_1 pp_typ t_2
+  | T_big_map (t_1, t_2) -> fprintf ppf "(big_map %a %a)" pp_typ t_1 pp_typ t_2
+  | T_chain_id -> fprintf ppf "chain_id"
 
-let rec string_of_data (_, d) =
-  let open Printf in
+let rec pp_data ppf (_, d) =
   match d with
-  | D_int d -> Z.to_string d
-  | D_string s -> sprintf "\"%s\"" s
-  | D_bytes b -> sprintf "%s" (Bytes.to_string b)
-  | D_elt (d_1, d_2) ->
-      sprintf "Elt %s %s" (string_of_data d_1) (string_of_data d_2)
-  | D_left d -> sprintf "Left %s" (string_of_data d)
-  | D_right d -> sprintf "Right %s" (string_of_data d)
-  | D_some d -> sprintf "Some %s" (string_of_data d)
-  | D_none -> sprintf "None"
-  | D_unit -> sprintf "Unit"
-  | D_bool b -> sprintf (match b with true -> "True" | false -> "False")
-  | D_pair (d_1, d_2) ->
-      sprintf "(Pair %s %s)" (string_of_data d_1) (string_of_data d_2)
-  | D_list d -> string_of_list string_of_data d
-  | D_instruction _ -> ""
+  | D_int d -> Z.pp_print ppf d
+  | D_string s -> fprintf ppf "\"%s\"" s
+  | D_bytes b -> fprintf ppf "%s" (Bytes.to_string b)
+  | D_elt (d_1, d_2) -> fprintf ppf "Elt %a %a" pp_data d_1 pp_data d_2
+  | D_left d -> fprintf ppf "Left %a" pp_data d
+  | D_right d -> fprintf ppf "Right %a" pp_data d
+  | D_some d -> fprintf ppf "Some %a" pp_data d
+  | D_none -> fprintf ppf "None"
+  | D_unit -> fprintf ppf "Unit"
+  | D_bool b -> fprintf ppf (match b with true -> "True" | false -> "False")
+  | D_pair (d_1, d_2) -> fprintf ppf "(Pair %a %a)" pp_data d_1 pp_data d_2
+  | D_list d -> pp_print_list pp_data ppf d
+  | D_instruction i -> pp_inst ppf i
 
 (* TODO: *)
-and print_inst ch (_, i, _) =
-  let open Printf in
+and pp_inst ppf (_, i, _) =
   match i with
-  | I_rename -> fprintf ch "RENAME"
-  | I_abs -> fprintf ch "ABS"
-  | I_drop -> fprintf ch "DROP"
-  | I_dup -> fprintf ch "DUP"
-  | I_swap -> fprintf ch "SWAP"
-  | I_some -> fprintf ch "SOME"
-  | I_unit -> fprintf ch "UNIT"
-  | I_pair -> fprintf ch "PAIR"
-  | I_car -> fprintf ch "CAR"
-  | I_cdr -> fprintf ch "CDR"
-  | I_cons -> fprintf ch "CONS"
-  | I_size -> fprintf ch "SIZE"
-  | I_mem -> fprintf ch "MEM"
-  | I_get -> fprintf ch "GET"
-  | I_update -> fprintf ch "UPDATE"
-  | I_exec -> fprintf ch "EXEC"
-  | I_failwith -> fprintf ch "FAILWITH"
-  | I_cast t -> fprintf ch "CAST %s" (string_of_typ t)
-  | I_concat -> fprintf ch "CONCAT"
-  | I_slice -> fprintf ch "SLICE"
-  | I_pack -> fprintf ch "PACK"
-  | I_add -> fprintf ch "ADD"
-  | I_sub -> fprintf ch "SUB"
-  | I_mul -> fprintf ch "MUL"
-  | I_ediv -> fprintf ch "EDIV"
-  | I_isnat -> fprintf ch "ISNAT"
-  | I_int -> fprintf ch "INT"
-  | I_neg -> fprintf ch "NEG"
-  | I_lsl -> fprintf ch "LSL"
-  | I_lsr -> fprintf ch "LSR"
-  | I_or -> fprintf ch "OR"
-  | I_and -> fprintf ch "AND"
-  | I_xor -> fprintf ch "XOR"
-  | I_not -> fprintf ch "NOT"
-  | I_compare -> fprintf ch "COMPARE"
-  | I_eq -> fprintf ch "EQ"
-  | I_neq -> fprintf ch "NEQ"
-  | I_lt -> fprintf ch "LT"
-  | I_gt -> fprintf ch "GT"
-  | I_le -> fprintf ch "LE"
-  | I_ge -> fprintf ch "GE"
-  | I_self -> fprintf ch "SELF"
-  | I_transfer_tokens -> fprintf ch "TRANSFER_TOKENS"
-  | I_set_delegate -> fprintf ch "SET_DELEGATE"
-  | I_implicit_account -> fprintf ch "IMPLICIT_ACCOUNT"
-  | I_now -> fprintf ch "NOW"
-  | I_amount -> fprintf ch "AMOUNT"
-  | I_balance -> fprintf ch "BALANCE"
-  | I_check_signature -> fprintf ch "CHECK_SIGNATURE"
-  | I_blake2b -> fprintf ch "BLAKE2B"
-  | I_sha256 -> fprintf ch "SHA256"
-  | I_sha512 -> fprintf ch "SHA512"
-  | I_hash_key -> fprintf ch "HASH_KEY"
-  | I_source -> fprintf ch "SOURCE"
-  | I_sender -> fprintf ch "SENDER"
-  | I_address -> fprintf ch "ADDRESS"
-  | I_chain_id -> fprintf ch "CHAIN_ID"
-  | I_noop -> fprintf ch ""
-  | I_unpair -> fprintf ch "UNPAIR"
-  | I_seq _ -> fprintf ch "" (* TODO: *)
-  | I_drop_n n when n = Z.one -> fprintf ch "DROP"
-  | I_drop_n n -> fprintf ch "DROP %s" (Z.to_string n)
-  | I_dig n -> fprintf ch "DIG %s" (Z.to_string n)
-  | I_dug n -> fprintf ch "DUG %s" (Z.to_string n)
-  | I_push (t, d) ->
-      fprintf ch "PUSH %s %s" (string_of_typ t) (string_of_data d)
-  | I_none t -> fprintf ch "NONE %s" (string_of_typ t)
+  | I_rename -> fprintf ppf "RENAME"
+  | I_abs -> fprintf ppf "ABS"
+  | I_drop -> fprintf ppf "DROP"
+  | I_dup -> fprintf ppf "DUP"
+  | I_swap -> fprintf ppf "SWAP"
+  | I_some -> fprintf ppf "SOME"
+  | I_unit -> fprintf ppf "UNIT"
+  | I_pair -> fprintf ppf "PAIR"
+  | I_car -> fprintf ppf "CAR"
+  | I_cdr -> fprintf ppf "CDR"
+  | I_cons -> fprintf ppf "CONS"
+  | I_size -> fprintf ppf "SIZE"
+  | I_mem -> fprintf ppf "MEM"
+  | I_get -> fprintf ppf "GET"
+  | I_update -> fprintf ppf "UPDATE"
+  | I_exec -> fprintf ppf "EXEC"
+  | I_failwith -> fprintf ppf "FAILWITH"
+  | I_cast t -> fprintf ppf "CAST %a" pp_typ t
+  | I_concat -> fprintf ppf "CONCAT"
+  | I_slice -> fprintf ppf "SLICE"
+  | I_pack -> fprintf ppf "PACK"
+  | I_add -> fprintf ppf "ADD"
+  | I_sub -> fprintf ppf "SUB"
+  | I_mul -> fprintf ppf "MUL"
+  | I_ediv -> fprintf ppf "EDIV"
+  | I_isnat -> fprintf ppf "ISNAT"
+  | I_int -> fprintf ppf "INT"
+  | I_neg -> fprintf ppf "NEG"
+  | I_lsl -> fprintf ppf "LSL"
+  | I_lsr -> fprintf ppf "LSR"
+  | I_or -> fprintf ppf "OR"
+  | I_and -> fprintf ppf "AND"
+  | I_xor -> fprintf ppf "XOR"
+  | I_not -> fprintf ppf "NOT"
+  | I_compare -> fprintf ppf "COMPARE"
+  | I_eq -> fprintf ppf "EQ"
+  | I_neq -> fprintf ppf "NEQ"
+  | I_lt -> fprintf ppf "LT"
+  | I_gt -> fprintf ppf "GT"
+  | I_le -> fprintf ppf "LE"
+  | I_ge -> fprintf ppf "GE"
+  | I_self -> fprintf ppf "SELF"
+  | I_transfer_tokens -> fprintf ppf "TRANSFER_TOKENS"
+  | I_set_delegate -> fprintf ppf "SET_DELEGATE"
+  | I_implicit_account -> fprintf ppf "IMPLICIT_ACCOUNT"
+  | I_now -> fprintf ppf "NOW"
+  | I_amount -> fprintf ppf "AMOUNT"
+  | I_balance -> fprintf ppf "BALANCE"
+  | I_check_signature -> fprintf ppf "CHECK_SIGNATURE"
+  | I_blake2b -> fprintf ppf "BLAKE2B"
+  | I_sha256 -> fprintf ppf "SHA256"
+  | I_sha512 -> fprintf ppf "SHA512"
+  | I_hash_key -> fprintf ppf "HASH_KEY"
+  | I_source -> fprintf ppf "SOURCE"
+  | I_sender -> fprintf ppf "SENDER"
+  | I_address -> fprintf ppf "ADDRESS"
+  | I_chain_id -> fprintf ppf "CHAIN_ID"
+  | I_noop -> fprintf ppf ""
+  | I_unpair -> fprintf ppf "UNPAIR"
+  | I_seq i_l -> pp_print_list pp_inst ppf i_l
+  | I_drop_n n when n = Z.one -> fprintf ppf "DROP"
+  | I_drop_n n -> fprintf ppf "DROP %a" Z.pp_print n
+  | I_dig n -> fprintf ppf "DIG %a" Z.pp_print n
+  | I_dug n -> fprintf ppf "DUG %a" Z.pp_print n
+  | I_push (t, d) -> fprintf ppf "PUSH %a %a" pp_typ t pp_data d
+  | I_none t -> fprintf ppf "NONE %a" pp_typ t
   | I_if_none (i_1, i_2) ->
-      fprintf ch "IF_NONE { %a } { %a }" print_inst i_1 print_inst i_2
-  | I_left t -> fprintf ch "LEFT %s" (string_of_typ t)
-  | I_right t -> fprintf ch "RIGHT %s" (string_of_typ t)
+      fprintf ppf "IF_NONE { %a } { %a }" pp_inst i_1 pp_inst i_2
+  | I_left t -> fprintf ppf "LEFT %a" pp_typ t
+  | I_right t -> fprintf ppf "RIGHT %a" pp_typ t
   | I_if_left (i_1, i_2) ->
-      fprintf ch "IF_LEFT { %a } { %a }" print_inst i_1 print_inst i_2
-  | I_nil t -> fprintf ch "NIL %s" (string_of_typ t)
+      fprintf ppf "IF_LEFT { %a } { %a }" pp_inst i_1 pp_inst i_2
+  | I_nil t -> fprintf ppf "NIL %a" pp_typ t
   | I_if_cons (i_1, i_2) ->
-      fprintf ch "IF_CONS { %a } { %a }" print_inst i_1 print_inst i_2
-  | I_empty_set t -> fprintf ch "EMPTY_SET %s" (string_of_typ t)
+      fprintf ppf "IF_CONS { %a } { %a }" pp_inst i_1 pp_inst i_2
+  | I_empty_set t -> fprintf ppf "EMPTY_SET %a" pp_typ t
   | I_empty_map (t_1, t_2) ->
-      fprintf ch "EMPTY_MAP %s %s" (string_of_typ t_1) (string_of_typ t_2)
+      fprintf ppf "EMPTY_MAP %a %a" pp_typ t_1 pp_typ t_2
   | I_empty_big_map (t_1, t_2) ->
-      fprintf ch "EMPTY_BIG_MAP %s %s" (string_of_typ t_1) (string_of_typ t_2)
-  | I_map i -> fprintf ch "MAP { %a }" print_inst i
-  | I_iter i -> fprintf ch "ITER { %a }" print_inst i
-  | I_if (i_1, i_2) ->
-      fprintf ch "IF { %a } { %a }" print_inst i_1 print_inst i_2
-  | I_loop i -> fprintf ch "LOOP { %a }" print_inst i
-  | I_loop_left i -> fprintf ch "LOOP_LEFT { %a }" print_inst i
+      fprintf ppf "EMPTY_BIG_MAP %a %a" pp_typ t_1 pp_typ t_2
+  | I_map i -> fprintf ppf "MAP { %a }" pp_inst i
+  | I_iter i -> fprintf ppf "ITER { %a }" pp_inst i
+  | I_if (i_1, i_2) -> fprintf ppf "IF { %a } { %a }" pp_inst i_1 pp_inst i_2
+  | I_loop i -> fprintf ppf "LOOP { %a }" pp_inst i
+  | I_loop_left i -> fprintf ppf "LOOP_LEFT { %a }" pp_inst i
   | I_lambda (t_1, t_2, i) ->
-      fprintf ch "LAMBDA %s %s { %a }" (string_of_typ t_1) (string_of_typ t_2)
-        print_inst i
-  | I_dip i -> fprintf ch "DIP { %a }" print_inst i
-  | I_dip_n (n, i) -> fprintf ch "DIP %s { %a }" (Z.to_string n) print_inst i
-  | I_unpack t -> fprintf ch "UNPACK %s" (string_of_typ t)
-  | I_contract t -> fprintf ch "CONTRACT %s" (string_of_typ t)
-  | I_create_contract p -> fprintf ch "CREATE_CONTRACT { %a }" program p
-  | I_apply -> fprintf ch "APPLY"
+      fprintf ppf "LAMBDA %a %a { %a }" pp_typ t_1 pp_typ t_2 pp_inst i
+  | I_dip i -> fprintf ppf "DIP { %a }" pp_inst i
+  | I_dip_n (n, i) -> fprintf ppf "DIP %a { %a }" Z.pp_print n pp_inst i
+  | I_unpack t -> fprintf ppf "UNPACK %a" pp_typ t
+  | I_contract t -> fprintf ppf "CONTRACT %a" pp_typ t
+  | I_create_contract p -> fprintf ppf "CREATE_CONTRACT { %a }" pp_program p
+  | I_apply -> fprintf ppf "APPLY"
 
-and program fmt { code; param; storage } =
-  let open Printf in
-  let () = fprintf fmt "parameter %s;\n" (string_of_typ param) in
-  let () = fprintf fmt "storage %s;\n" (string_of_typ storage) in
-  fprintf fmt "code { %a }\n" print_inst code
+and pp_program fmt { code; param; storage } =
+  let () = fprintf fmt "parameter %a;\n" pp_typ param in
+  let () = fprintf fmt "storage %a;\n" pp_typ storage in
+  fprintf fmt "code { %a }\n" pp_inst code
