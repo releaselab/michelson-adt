@@ -1,3 +1,3 @@
 type pos = { col : int; lin : int }
 
-type t = { s : pos; e : pos }
+type t = { filename : string; s : pos; e : pos }

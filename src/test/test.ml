@@ -6,7 +6,7 @@ let () =
     let open Michelson.Parser in
     let parse_f () =
       let ast = parse_file (dir ^ file) in
-      let _ = convert ast in
+      let _ = convert file ast in
       ()
     in
     let test_f () =
