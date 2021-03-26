@@ -27,6 +27,7 @@
   bignum
   (tezos-micheline
    (>= 7.0))
+  ppx_deriving
   (bisect_ppx
    (and
     :with-test

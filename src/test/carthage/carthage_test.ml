@@ -1,9 +1,9 @@
 let () =
-  let dir = "../../../../tests/" in
+  let dir = "../../../../../tests/" in
   let files = Sys.readdir dir in
   let open Alcotest in
   let create_test file =
-    let open Michelson.Parser in
+    let open Michelson.Carthage.Parser in
     let parse_f () =
       let ast = parse_file (dir ^ file) in
       let _ = convert ast in

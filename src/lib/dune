@@ -1,9 +1,4 @@
 (library
  (name michelson)
  (public_name michelson)
- (libraries base bignum tezos-micheline adt)
- (preprocess
-  (pps ppx_deriving.ord ppx_sexp_conv))
- (modules_without_implementation location)
- (instrumentation
-  (backend bisect_ppx)))
+ (libraries loc carthage))

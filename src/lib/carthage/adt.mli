@@ -1,5 +1,3 @@
-open Base
-
 type annot = A_type of string | A_var of string | A_field of string
 [@@deriving ord, sexp]
 
@@ -27,7 +25,6 @@ type ('l, 'a) typ_t =
   | T_key_hash
   | T_timestamp
   | T_address
-[@@deriving ord, sexp]
 
 and ('l, 'a) typ = 'l * ('l, 'a) typ_t * 'a [@@deriving ord, sexp]
 
@@ -39,15 +36,15 @@ and ('l, 'a) inst_t =
   | I_loop of ('l, 'a) inst
   | I_loop_left of ('l, 'a) inst
   | I_dip of ('l, 'a) inst
-  | I_dip_n of Bignum.t * ('l, 'a) inst
+  | I_dip_n of Bigint.t * ('l, 'a) inst
   | I_exec
   | I_apply
   | I_drop
-  | I_drop_n of Bignum.t
+  | I_drop_n of Bigint.t
   | I_dup
   | I_swap
-  | I_dig of Bignum.t
-  | I_dug of Bignum.t
+  | I_dig of Bigint.t
+  | I_dug of Bigint.t
   | I_push of ('l, 'a) typ * ('l, 'a) data
   | I_unit
   | I_lambda of ('l, 'a) typ * ('l, 'a) typ * ('l, 'a) inst
@@ -118,12 +115,11 @@ and ('l, 'a) inst_t =
   | I_cast of ('l, 'a) typ
   | I_unpair
   | I_rename
-[@@deriving ord, sexp]
 
 and ('l, 'a) inst = 'l * ('l, 'a) inst_t * 'a [@@deriving ord, sexp]
 
 and ('l, 'a) data_t =
-  | D_int of Bignum.t
+  | D_int of Bigint.t
   | D_string of string
   | D_bytes of Bytes.t
   | D_unit
@@ -136,7 +132,6 @@ and ('l, 'a) data_t =
   | D_elt of ('l, 'a) data * ('l, 'a) data
   | D_list of ('l, 'a) data list
   | D_instruction of ('l, 'a) inst
-[@@deriving ord, sexp]
 
 and ('l, 'a) data = 'l * ('l, 'a) data_t [@@deriving ord, sexp]
 
