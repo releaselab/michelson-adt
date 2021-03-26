@@ -23,7 +23,8 @@
   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
   (dune :build)
-  zarith
+  base
+  bignum
   (tezos-micheline
    (>= 7.0))
   (bisect_ppx

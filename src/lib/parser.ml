@@ -75,11 +75,13 @@ let rec typ token =
   | Prim (_, _, _, l) -> (token_location token, t, List.map get_annot l)
   | _ -> assert false
 
+let bignum_of_z n = Bignum.of_string (Z.to_string n)
+
 let rec data (_, typ, _) token =
   let t =
     let open Micheline in
     match token with
-    | Int (_, n) -> D_int n
+    | Int (_, n) -> D_int (bignum_of_z n)
     | String (_, s) -> D_string s
     | Bytes (_, b) -> D_bytes b
     | Prim (_, "Unit", [], _) -> D_unit
@@ -131,15 +133,15 @@ and inst token =
     | Prim (_, "LOOP", [ b ], _) -> I_loop (inst b)
     | Prim (_, "LOOP_LEFT", [ b ], _) -> I_loop_left (inst b)
     | Prim (_, "DIP", [ b ], _) -> I_dip (inst b)
-    | Prim (_, "DIP", [ Int (_, n); b ], _) -> I_dip_n (n, inst b)
+    | Prim (_, "DIP", [ Int (_, n); b ], _) -> I_dip_n (bignum_of_z n, inst b)
     | Prim (_, "EXEC", [], _) -> I_exec
     | Prim (_, "APPLY", [], _) -> I_apply
     | Prim (_, "DROP", [], _) -> I_drop
-    | Prim (_, "DROP", [ Int (_, n) ], _) -> I_drop_n n
+    | Prim (_, "DROP", [ Int (_, n) ], _) -> I_drop_n (bignum_of_z n)
     | Prim (_, "DUP", [], _) -> I_dup
     | Prim (_, "SWAP", [], _) -> I_swap
-    | Prim (_, "DIG", [ Int (_, n) ], _) -> I_dig n
-    | Prim (_, "DUG", [ Int (_, n) ], _) -> I_dug n
+    | Prim (_, "DIG", [ Int (_, n) ], _) -> I_dig (bignum_of_z n)
+    | Prim (_, "DUG", [ Int (_, n) ], _) -> I_dug (bignum_of_z n)
     | Prim (_, "PUSH", [ t; d ], _) ->
         let t = typ t in
         I_push (t, data t d)

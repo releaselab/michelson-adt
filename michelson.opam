@@ -9,7 +9,8 @@ homepage: "https://gitlab.com/releaselab/fresco/michelson"
 bug-reports: "https://gitlab.com/releaselab/fresco/michelson/issues"
 depends: [
   "dune" {>= "2.7" & build}
-  "zarith"
+  "base"
+  "bignum"
   "tezos-micheline" {>= "7.0"}
   "bisect_ppx" {with-test & >= "2.5.0"}
   "alcotest" {with-test}
