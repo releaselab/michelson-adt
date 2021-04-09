@@ -1,4 +1,4 @@
 (library
  (name michelson)
  (public_name michelson)
- (libraries loc carthage))
+ (libraries loc carthage edo))

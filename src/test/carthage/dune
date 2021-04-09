@@ -1,3 +1,0 @@
-(test
- (name carthage_test)
- (libraries michelson alcotest))

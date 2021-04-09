@@ -1,0 +1,6 @@
+(library
+ (name edo)
+ (public_name michelson.edo)
+ (libraries loc tezos-micheline base bignum)
+ (preprocess
+  (pps ppx_deriving.ord ppx_sexp_conv)))
