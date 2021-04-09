@@ -1,5 +1,4 @@
 (library
  (name michelson)
  (public_name michelson)
- (libraries zarith tezos-micheline)
- (modules_without_implementation location))
+ (libraries loc carthage edo))
