@@ -34,3 +34,4 @@
     (>= 2.5.0)))
   (alcotest :with-test)
   (ppx_inline_test :with-test)))
+(using menhir 2.1)
