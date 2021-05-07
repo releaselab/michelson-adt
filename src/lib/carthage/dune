@@ -1,7 +1,7 @@
 (library
  (name carthage)
  (public_name michelson.carthage)
- (libraries loc tezos-micheline core_kernel bignum)
+ (libraries loc core_kernel bignum hex)
  (preprocess
   (pps ppx_deriving.ord ppx_sexp_conv)))
 
@@ -9,4 +9,5 @@
  (modules lexer))
 
 (menhir
- (modules parser))
+ (modules parser)
+ (flags --explain))

@@ -19,4 +19,4 @@ let () =
   in
   let tests = Array.map create_test files in
   let tests = Array.to_list tests in
-  run "Michelson parser" [ ("parsing", tests) ]
+  run "Michelson parser" [ ("parsing edo", tests) ]
