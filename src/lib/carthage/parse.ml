@@ -28,9 +28,8 @@ let parse_program filename =
         in
         Error (Error.of_string error_msg)
   in
-  List.iter !comments ~f:(fun (c, _l) -> Stdio.print_endline c);
   let () = Stdio.In_channel.close in_c in
-  adt
+  adt, comments
 
 let print_error_position l =
   Stdlib.Format.sprintf "Line: %d Position: %d" l.Loc.start_pos.lin
