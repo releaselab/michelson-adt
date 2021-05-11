@@ -1,7 +1,7 @@
 /* multi
 line
 comment */
-parameter (pair :p key signature); # comment
+parameter (pair :p key signature);
 storage (unit :s);
 code { DUP @ps; SWAP; SWAP; DIG 1; DUG 1; DROP; CAR;
        PUSH (lambda nat unit) { DROP; UNIT }; SOME;

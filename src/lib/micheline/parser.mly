@@ -10,6 +10,7 @@
 %token <string> STRING
 %token <string> IDENT
 %token <string> ANNOT
+%token <string> SPEC
 %token LB RB LP RP
 %token SEMICOLON MINUS 
 %token EOF
@@ -19,9 +20,9 @@
 %%
 
 start:
-    LB e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? RB EOF
-  | e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? EOF
-      { Seq (pos $startpos $endpos, [e_1; e_2; e_3]) }
+    s=SPEC? LB e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? RB EOF
+  | s=SPEC? e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? EOF
+      { Seq (pos $startpos $endpos, [e_1; e_2; e_3], s) }
 
 application:
     p=IDENT annots=ANNOT* args=arg*
@@ -43,7 +44,7 @@ expr_arg:
   | s=STRING
       { String (pos $startpos $endpos, s) }
   | LB e=seq RB
-      { Seq (pos $startpos $endpos, e) }
+      { Seq (pos $startpos $endpos, e, None) }
 
 expr:
     a=application { a }

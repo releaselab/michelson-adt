@@ -16,7 +16,7 @@ let parse_program filename =
   let lexbuf = Lexing.from_channel in_c in
   let comments = ref [] in
   let res =
-    try Ok (Parser.start (Lexer.next_token comments) lexbuf, comments) with
+    try Ok (Parser.start Lexer.next_token lexbuf, comments) with
     | Lexer.Lexical_error msg ->
         let error_msg =
           Stdlib.Format.sprintf "%s: %s@." (print_error_position lexbuf) msg
@@ -78,7 +78,7 @@ let rec type_parse = function
             raise (Parse_error error_msg)
       in
       (l, t, annot)
-  | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _) ->
+  | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
       in
@@ -106,7 +106,7 @@ let rec data_parse = function
                 (print_error_position l)
             in
             raise (Parse_error error_msg) ))
-  | Seq (l, datas) -> (
+  | Seq (l, datas, _) -> (
       try (l, D_list (List.map datas ~f:data_parse))
       with Parse_error _ ->
         (l, D_instruction (l, I_seq (List.map datas ~f:inst_parse), [])))
@@ -168,7 +168,9 @@ and inst_parse = function
         | "BALANCE", [] -> I_balance
         | "CHAIN_ID", [] -> I_chain_id
         | "CONTRACT", [ t ] -> I_contract (type_parse t)
-        | "CREATE_CONTRACT", [ p ] -> I_create_contract (program_parse p)
+        | "CREATE_CONTRACT", [ p ] ->
+            let c, _ = program_parse p in
+            I_create_contract c
         | "IMPLICIT_ACCOUNT", [] -> I_implicit_account
         | "NOW", [] -> I_now
         | "SELF", [] -> I_self
@@ -227,14 +229,14 @@ and inst_parse = function
             raise (Parse_error error_msg)
       in
       (l, i, annot)
-  | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _) ->
+  | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
       in
       raise (Parse_error error_msg)
 
 and code_parse = function
-  | Seq (l, insts) -> (l, I_seq (List.map insts ~f:inst_parse), [])
+  | Seq (l, insts, _) -> (l, I_seq (List.map insts ~f:inst_parse), [])
   | Int (l, _) | String (l, _) | Bytes (l, _) | Prim (l, _, _, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: code of contract must be a sequence@."
@@ -247,7 +249,7 @@ and param_parse = type_parse
 and storage_parse = type_parse
 
 and program_parse = function
-  | Seq (_l, nodes) -> (
+  | Seq (_l, nodes, spec) -> (
       match nodes with
       | [
        (Prim (_, p_1, _, _) as prim_1);
@@ -275,7 +277,7 @@ and program_parse = function
           let code = code_parse code in
           let param = param_parse param in
           let storage = storage_parse storage in
-          Adt.{ param; storage; code }
+          (Adt.{ param; storage; code }, spec)
       | n ->
           (* let error_msg =
                Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)

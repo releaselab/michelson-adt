@@ -48,6 +48,5 @@ code { DUP @ps; SWAP; SWAP; DIG 1; DUG 1; DROP; CAR;
        SPLIT_TICKET; IF_NONE {} { JOIN_TICKETS; DROP };
        PUSH nat 0; DUP 2; PAIR 2; DUP; GET 1; UPDATE 1;
        DIP 2 { DROP 15 }; DROP 11;
-       # READ_TICKET; SPLIT_TICKET;
-       # JOIN_TICKET; SAPLING_EMPTY_STATE;
+       
        UNIT; NIL operation; PAIR };

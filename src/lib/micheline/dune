@@ -1,9 +1,9 @@
 (library
  (name micheline)
  (public_name michelson.micheline)
- (libraries loc base bignum hex)
+ (libraries base bignum hex)
  (preprocess
-  (pps ppx_sexp_conv)))
+  (pps ppx_deriving.ord ppx_sexp_conv)))
 
 (ocamllex
  (modules lexer))

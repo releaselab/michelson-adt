@@ -7,5 +7,5 @@ type ('l, 'p) node =
   | String of 'l * string
   | Bytes of 'l * Bytes.t
   | Prim of 'l * 'p * ('l, 'p) node list * annot list
-  | Seq of 'l * ('l, 'p) node list
+  | Seq of 'l * ('l, 'p) node list * string option
 [@@deriving sexp]

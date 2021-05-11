@@ -1,6 +1,6 @@
 (library
  (name carthage)
  (public_name michelson.carthage)
- (libraries loc micheline base)
+ (libraries micheline base)
  (preprocess
   (pps ppx_deriving.ord ppx_sexp_conv)))
