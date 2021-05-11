@@ -1,13 +1,6 @@
 (library
  (name carthage)
  (public_name michelson.carthage)
- (libraries loc core_kernel bignum hex)
+ (libraries loc micheline base)
  (preprocess
   (pps ppx_deriving.ord ppx_sexp_conv)))
-
-(ocamllex
- (modules lexer))
-
-(menhir
- (modules parser)
- (flags --explain))

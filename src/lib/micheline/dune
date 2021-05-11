@@ -1,0 +1,13 @@
+(library
+ (name micheline)
+ (public_name michelson.micheline)
+ (libraries loc base bignum hex)
+ (preprocess
+  (pps ppx_sexp_conv)))
+
+(ocamllex
+ (modules lexer))
+
+(menhir
+ (modules parser)
+ (flags --explain))

@@ -25,13 +25,14 @@
   (dune :build)
   base
   bignum
-  (tezos-micheline
-   (>= 7.0))
+  hex
   ppx_deriving
+  ppx_sexp_conv
   (bisect_ppx
    (and
     :with-test
     (>= 2.5.0)))
   (alcotest :with-test)
   (ppx_inline_test :with-test)))
+
 (using menhir 2.1)

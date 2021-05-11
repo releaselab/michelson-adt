@@ -1,6 +1,6 @@
 
 %{
-  open Micheline
+  open Node
 
   let pos = Loc.loc_of_lexbuf_positions
 %}

@@ -64,6 +64,12 @@ let rec type_parse = function
         | "string", [] -> T_string
         | "timestamp", [] -> T_timestamp
         | "unit", [] -> T_unit
+        | "never", [] -> T_never
+        | "bls12_381_g1", [] -> T_bls12_381_g1
+        | "bls12_381_g2", [] -> T_bls12_381_g2
+        | "bls12_381_fr", [] -> T_bls12_381_fr
+        | "sapling_transaction", [ Int (_, n) ] -> T_sapling_transaction n
+        | "sapling_state", [ Int (_, n) ] -> T_sapling_state n
         | _ ->
             let error_msg =
               Stdlib.Format.sprintf "%s: ill-formed type@."
@@ -195,6 +201,24 @@ and inst_parse = function
         | "UNPACK", [ t ] -> I_unpack (type_parse t)
         | "UPDATE", [] -> I_update
         | "UNPAIR", [] -> I_unpair
+        | "NEVER", [] -> I_never
+        | "SELF_ADDRESS", [] -> I_self_address
+        | "VOTING_POWER", [] -> I_voting_power
+        | "LEVEL", [] -> I_level
+        | "KECCAK", [] -> I_keccak
+        | "SHA3", [] -> I_sha3
+        | "TOTAL_VOTING_POWER", [] -> I_total_voting_power
+        | "PAIRING_CHECK", [] -> I_pairing_check
+        | "SAPLING_VERIFY_UPDATE", [] -> I_sapling_verify_update
+        | "TICKET", [] -> I_ticket
+        | "READ_TICKET", [] -> I_read_ticket
+        | "SPLIT_TICKET", [] -> I_split_ticket
+        | "JOIN_TICKETS", [] -> I_join_tickets
+        | "DUP", [ Int (_, n) ] -> I_dup_n n
+        | "PAIR", [ Int (_, n) ] -> I_pair_n n
+        | "GET", [ Int (_, n) ] -> I_get_n n
+        | "UPDATE", [ Int (_, n) ] -> I_update_n n
+        | "SAPLING_EMPTY_STATE", [ Int (_, n) ] -> I_sapling_empty_state n
         | _ ->
             let error_msg =
               Stdlib.Format.sprintf "%s: unknown primitive@."
