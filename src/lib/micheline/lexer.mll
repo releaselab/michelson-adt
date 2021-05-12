@@ -20,10 +20,14 @@ let comment = [^ '\n']* new_line
 let annot = ('%' | '@' | ':') ident*
 
 rule next_token = parse
+  | "/*@"
+      { spec 0 (Buffer.create 100) lexbuf }
   | "/*"
-      { comment 0 (Buffer.create 100) lexbuf }
-  | '#' (comment as c)
+      { comment 0 lexbuf }
+  | "#@" (comment as c)
       { new_line lexbuf; SPEC c }
+  | '#' comment
+      { new_line lexbuf; next_token lexbuf}
   | new_line
       { new_line lexbuf; next_token lexbuf }
   | space+
@@ -42,15 +46,34 @@ rule next_token = parse
   | eof           { EOF }
   | _ as c        { raise (Lexical_error ("Illegal character: " ^ String.make 1 c)) }
 
-and comment counter buf = parse
+and spec counter buf = parse
   | "/*" as c
       { Buffer.add_string buf c;
-        comment (counter + 1) buf lexbuf }
+        spec (counter + 1) buf lexbuf }
   | "*/"
       { if counter = 0 then 
           SPEC (Buffer.contents buf)
         else
-          comment (counter - 1) buf lexbuf }
-  | new_line  { Buffer.add_string buf "\n"; new_line lexbuf; comment counter buf lexbuf }
-  | eof       { raise (Lexical_error "unterminated comment") }
-  | _ as c    { Buffer.add_char buf c; comment counter buf lexbuf }
+          spec (counter - 1) buf lexbuf }
+  | new_line as n
+      { Buffer.add_string buf n; new_line lexbuf; spec counter buf lexbuf }
+  | eof
+      { raise (Lexical_error "unterminated comment") }
+  | _ as c
+      { Buffer.add_char buf c; spec counter buf lexbuf }
+  
+
+and comment counter = parse
+  | "/*"
+      { comment (counter + 1) lexbuf }
+  | "*/"
+      { if counter = 0 then 
+          next_token lexbuf 
+        else
+          comment (counter - 1) lexbuf }
+  | new_line
+      { new_line lexbuf; comment counter lexbuf }
+  | eof
+      { raise (Lexical_error "unterminated comment") }
+  | _
+      { comment counter lexbuf }
