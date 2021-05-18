@@ -1,9 +1,16 @@
 open Base
 
-type pos = { col : int; lin : int } [@@deriving ord, sexp]
+type pos = { col : int; lin : int } [@@deriving eq, ord, sexp]
 
 type t = { filename : string; start_pos : pos; end_pos : pos }
-[@@deriving ord, sexp]
+[@@deriving eq, ord, sexp]
+
+let dummy_location =
+  {
+    filename = "";
+    start_pos = { col = 0; lin = 0 };
+    end_pos = { col = 0; lin = 0 };
+  }
 
 let loc_of_lexbuf_positions s e =
   let open Lexing in

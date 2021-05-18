@@ -1,4 +1,3 @@
-#@ requires { length __stack__ = 1 };
 parameter nat;
 storage nat;
 code {  CAR; PUSH @index nat 1; DUP @acc;

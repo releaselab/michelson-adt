@@ -14,9 +14,8 @@ let print_error_position lexbuf =
 let parse_program filename =
   let in_c = Stdio.In_channel.create filename in
   let lexbuf = Lexing.from_channel in_c in
-  let comments = ref [] in
   let res =
-    try Ok (Parser.start Lexer.next_token lexbuf, comments) with
+    try Ok (Parser.start Lexer.next_token lexbuf) with
     | Lexer.Lexical_error msg ->
         let error_msg =
           Stdlib.Format.sprintf "%s: %s@." (print_error_position lexbuf) msg
@@ -70,6 +69,7 @@ let rec type_parse = function
         | "bls12_381_fr", [] -> T_bls12_381_fr
         | "sapling_transaction", [ Int (_, n) ] -> T_sapling_transaction n
         | "sapling_state", [ Int (_, n) ] -> T_sapling_state n
+        | "ticket", [ t ] -> T_ticket (type_parse t)
         | _ ->
             let error_msg =
               Stdlib.Format.sprintf "%s: ill-formed type@."
@@ -112,6 +112,9 @@ let rec data_parse = function
         (l, D_instruction (l, I_seq (List.map datas ~f:inst_parse), [])))
 
 and inst_parse = function
+  | Seq (l, s, _) ->
+      let i = I_seq (List.map s ~f:inst_parse) in
+      (l, i, [])
   | Prim (l, i, args, annot) ->
       let i =
         match (i, args) with
@@ -203,6 +206,8 @@ and inst_parse = function
         | "UNPACK", [ t ] -> I_unpack (type_parse t)
         | "UPDATE", [] -> I_update
         | "UNPAIR", [] -> I_unpair
+        | "CAST", [ t ] -> I_cast (type_parse t)
+        | "RENAME", [] -> I_rename
         | "NEVER", [] -> I_never
         | "SELF_ADDRESS", [] -> I_self_address
         | "VOTING_POWER", [] -> I_voting_power
@@ -229,54 +234,70 @@ and inst_parse = function
             raise (Parse_error error_msg)
       in
       (l, i, annot)
-  | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _, _) ->
+  | Int (l, _) | String (l, _) | Bytes (l, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
       in
       raise (Parse_error error_msg)
 
-and code_parse = function
-  | Seq (l, insts, _) -> (l, I_seq (List.map insts ~f:inst_parse), [])
-  | Int (l, _) | String (l, _) | Bytes (l, _) | Prim (l, _, _, _) ->
+and code_parse l = function
+  | [ Seq (l, insts, _) ] -> (l, I_seq (List.map insts ~f:inst_parse), [])
+  | Seq (_, _, _) :: _ :: _
+  | (Int (_, _) | String (_, _) | Bytes (_, _) | Prim (_, _, _, _)) :: _
+  | [] ->
       let error_msg =
         Stdlib.Format.sprintf "%s: code of contract must be a sequence@."
           (print_error_position l)
       in
       raise (Parse_error error_msg)
 
-and param_parse = type_parse
+and param_parse l = function
+  | [ (Prim _ as t) ] -> type_parse t
+  | Prim (_, _, _, _) :: _ :: _
+  | (Int (_, _) | String (_, _) | Bytes (_, _) | Seq (_, _, _)) :: _
+  | [] ->
+      let error_msg =
+        Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
+      in
+      raise (Parse_error error_msg)
 
-and storage_parse = type_parse
+and storage_parse l = function
+  | [ (Prim _ as t) ] -> type_parse t
+  | Prim (_, _, _, _) :: _ :: _
+  | (Int (_, _) | String (_, _) | Bytes (_, _) | Seq (_, _, _)) :: _
+  | [] ->
+      let error_msg =
+        Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
+      in
+      raise (Parse_error error_msg)
 
 and program_parse = function
   | Seq (_l, nodes, spec) -> (
       match nodes with
       | [
-       (Prim (_, p_1, _, _) as prim_1);
-       (Prim (_, p_2, _, _) as prim_2);
-       (Prim (_, p_3, _, _) as prim_3);
+       Prim (l_1, p_1, a_1, _); Prim (l_2, p_2, a_2, _); Prim (l_3, p_3, a_3, _);
       ] ->
-          let code =
-            if String.equal p_1 "code" then prim_1
-            else if String.equal p_2 "code" then prim_2
-            else if String.equal p_3 "code" then prim_3
+          let l_code, code =
+            if String.equal p_1 "code" then (l_1, a_1)
+            else if String.equal p_2 "code" then (l_2, a_2)
+            else if String.equal p_3 "code" then (l_3, a_3)
             else raise (Parse_error "missing script code")
           in
-          let param =
-            if String.equal p_1 "parameter" then prim_1
-            else if String.equal p_2 "parameter" then prim_2
-            else if String.equal p_3 "parameter" then prim_3
+          let l_param, param =
+            if String.equal p_1 "parameter" then (l_1, a_1)
+            else if String.equal p_2 "parameter" then (l_2, a_2)
+            else if String.equal p_3 "parameter" then (l_3, a_3)
             else raise (Parse_error "missing script parameter")
           in
-          let storage =
-            if String.equal p_1 "storage" then prim_1
-            else if String.equal p_2 "storage" then prim_2
-            else if String.equal p_3 "storage" then prim_3
+          let l_storage, storage =
+            if String.equal p_1 "storage" then (l_1, a_1)
+            else if String.equal p_2 "storage" then (l_2, a_2)
+            else if String.equal p_3 "storage" then (l_3, a_3)
             else raise (Parse_error "missing script storage")
           in
-          let code = code_parse code in
-          let param = param_parse param in
-          let storage = storage_parse storage in
+          let code = code_parse l_code code in
+          let param = param_parse l_param param in
+          let storage = storage_parse l_storage storage in
           (Adt.{ param; storage; code }, spec)
       | n ->
           (* let error_msg =

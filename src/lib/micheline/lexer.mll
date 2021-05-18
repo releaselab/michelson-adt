@@ -15,7 +15,7 @@ let string_content = "\\\"" | '\r' | '\n' | '\t' | '\b' | "\\\\" | [^ '"' ]
 let string = '"' string_content* '"'
 let new_line = '\n' | "\r\n"
 let ident = (letter | digit | '_' | '.')+
-let hex = "0x" ['0'-'9' 'a'-'f' 'A'-'F']+
+let hex = "0x" ['0'-'9' 'a'-'f' 'A'-'F']*
 let comment = [^ '\n']* new_line
 let annot = ('%' | '@' | ':') ident*
 
@@ -35,9 +35,9 @@ rule next_token = parse
   | string as s
       { STRING s }
   | annot as s    { ANNOT s }
-  | ident as s    { IDENT s }
-  | hex as s      { HEX (Hex.to_bytes (`Hex (String.sub s 2 (String.length s - 2)))) }
   | number as s   { NUM (Bigint.of_string s) }
+  | hex as s      { HEX (Hex.to_bytes (`Hex (String.sub s 2 (String.length s - 2)))) }
+  | ident as s    { IDENT s }  
   | ';'           { SEMICOLON }
   | '{'           { LB }
   | '}'           { RB }

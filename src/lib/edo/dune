@@ -1,6 +1,6 @@
 (library
  (name edo)
  (public_name michelson.edo)
- (libraries micheline base bignum)
+ (libraries micheline core_kernel bignum)
  (preprocess
-  (pps ppx_deriving.ord ppx_sexp_conv)))
+  (pps ppx_deriving.ord ppx_sexp_conv ppx_jane)))

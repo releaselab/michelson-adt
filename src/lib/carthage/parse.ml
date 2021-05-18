@@ -36,7 +36,7 @@ let print_error_position l =
     l.Loc.start_pos.col
 
 let rec type_parse = function
-  | Prim (l, t, args, annot) ->
+  | Prim (loc, t, args, annots) ->
       let t =
         match (t, args) with
         | "address", [] -> T_address
@@ -66,23 +66,26 @@ let rec type_parse = function
         | _ ->
             let error_msg =
               Stdlib.Format.sprintf "%s: ill-formed type@."
-                (print_error_position l)
+                (print_error_position loc)
             in
             raise (Parse_error error_msg)
       in
-      (l, t, annot)
+      let annots = List.filter_map annots ~f:annot_of_string in
+      (t, (loc, annots))
   | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
       in
       raise (Parse_error error_msg)
 
-let rec data_parse = function
-  | Int (l, n) -> (l, D_int n)
-  | Bytes (l, b) -> (l, D_bytes b)
-  | String (l, s) -> (l, D_string s)
-  | Prim (l, p, args, _) -> (
-      ( l,
+let rec data_parse =
+  let annots = [] in
+  function
+  | Int (loc, n) -> (D_int n, (loc, annots))
+  | Bytes (loc, b) -> (D_bytes b, (loc, annots))
+  | String (loc, s) -> (D_string s, (loc, annots))
+  | Prim (loc, p, args, annots) ->
+      let d =
         match (p, args) with
         | "Unit", [] -> D_unit
         | "True", [] -> D_bool true
@@ -96,16 +99,23 @@ let rec data_parse = function
         | _ ->
             let error_msg =
               Stdlib.Format.sprintf "%s: unknown primitive@."
-                (print_error_position l)
+                (print_error_position loc)
             in
-            raise (Parse_error error_msg) ))
-  | Seq (l, datas, _) -> (
-      try (l, D_list (List.map datas ~f:data_parse))
+            raise (Parse_error error_msg)
+      in
+      let annots = List.filter_map annots ~f:annot_of_string in
+      (d, (loc, annots))
+  | Seq (loc, datas, _) -> (
+      try (D_list (List.map datas ~f:data_parse), (loc, annots))
       with Parse_error _ ->
-        (l, D_instruction (l, I_seq (List.map datas ~f:inst_parse), [])))
+        ( D_instruction (I_seq (List.map datas ~f:inst_parse), (loc, annots)),
+          (loc, annots) ))
 
 and inst_parse = function
-  | Prim (l, i, args, annot) ->
+  | Seq (l, s, _) ->
+      let i = I_seq (List.map s ~f:inst_parse) in
+      (i, (l, []))
+  | Prim (loc, i, args, annots) ->
       let i =
         match (i, args) with
         | "APPLY", [] -> I_apply
@@ -196,62 +206,81 @@ and inst_parse = function
         | "UNPACK", [ t ] -> I_unpack (type_parse t)
         | "UPDATE", [] -> I_update
         | "UNPAIR", [] -> I_unpair
+        | "CAST", [ t ] -> I_cast (type_parse t)
+        | "RENAME", [] -> I_rename
         | _ ->
             let error_msg =
               Stdlib.Format.sprintf "%s: unknown primitive@."
-                (print_error_position l)
+                (print_error_position loc)
             in
             raise (Parse_error error_msg)
       in
-      (l, i, annot)
-  | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _, _) ->
+      let annots = List.filter_map annots ~f:annot_of_string in
+      (i, (loc, annots))
+  | Int (l, _) | String (l, _) | Bytes (l, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
       in
       raise (Parse_error error_msg)
 
-and code_parse = function
-  | Seq (l, insts, _) -> (l, I_seq (List.map insts ~f:inst_parse), [])
-  | Int (l, _) | String (l, _) | Bytes (l, _) | Prim (l, _, _, _) ->
+and code_parse l = function
+  | [ Seq (l, insts, _) ] -> (I_seq (List.map insts ~f:inst_parse), (l, []))
+  | Seq (_, _, _) :: _ :: _
+  | (Int (_, _) | String (_, _) | Bytes (_, _) | Prim (_, _, _, _)) :: _
+  | [] ->
       let error_msg =
         Stdlib.Format.sprintf "%s: code of contract must be a sequence@."
           (print_error_position l)
       in
       raise (Parse_error error_msg)
 
-and param_parse = type_parse
+and param_parse l = function
+  | [ (Prim _ as t) ] -> type_parse t
+  | Prim (_, _, _, _) :: _ :: _
+  | (Int (_, _) | String (_, _) | Bytes (_, _) | Seq (_, _, _)) :: _
+  | [] ->
+      let error_msg =
+        Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
+      in
+      raise (Parse_error error_msg)
 
-and storage_parse = type_parse
+and storage_parse l = function
+  | [ (Prim _ as t) ] -> type_parse t
+  | Prim (_, _, _, _) :: _ :: _
+  | (Int (_, _) | String (_, _) | Bytes (_, _) | Seq (_, _, _)) :: _
+  | [] ->
+      let error_msg =
+        Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
+      in
+      raise (Parse_error error_msg)
 
 and program_parse = function
   | Seq (_l, nodes, spec) -> (
       match nodes with
       | [
-       (Prim (_, p_1, _, _) as prim_1);
-       (Prim (_, p_2, _, _) as prim_2);
-       (Prim (_, p_3, _, _) as prim_3);
+       Prim (l_1, p_1, a_1, _); Prim (l_2, p_2, a_2, _); Prim (l_3, p_3, a_3, _);
       ] ->
-          let code =
-            if String.equal p_1 "code" then prim_1
-            else if String.equal p_2 "code" then prim_2
-            else if String.equal p_3 "code" then prim_3
+          let l_code, code =
+            if String.equal p_1 "code" then (l_1, a_1)
+            else if String.equal p_2 "code" then (l_2, a_2)
+            else if String.equal p_3 "code" then (l_3, a_3)
             else raise (Parse_error "missing script code")
           in
-          let param =
-            if String.equal p_1 "parameter" then prim_1
-            else if String.equal p_2 "parameter" then prim_2
-            else if String.equal p_3 "parameter" then prim_3
+          let l_param, param =
+            if String.equal p_1 "parameter" then (l_1, a_1)
+            else if String.equal p_2 "parameter" then (l_2, a_2)
+            else if String.equal p_3 "parameter" then (l_3, a_3)
             else raise (Parse_error "missing script parameter")
           in
-          let storage =
-            if String.equal p_1 "storage" then prim_1
-            else if String.equal p_2 "storage" then prim_2
-            else if String.equal p_3 "storage" then prim_3
+          let l_storage, storage =
+            if String.equal p_1 "storage" then (l_1, a_1)
+            else if String.equal p_2 "storage" then (l_2, a_2)
+            else if String.equal p_3 "storage" then (l_3, a_3)
             else raise (Parse_error "missing script storage")
           in
-          let code = code_parse code in
-          let param = param_parse param in
-          let storage = storage_parse storage in
+          let code = code_parse l_code code in
+          let param = param_parse l_param param in
+          let storage = storage_parse l_storage storage in
           (Adt.{ param; storage; code }, spec)
       | n ->
           (* let error_msg =

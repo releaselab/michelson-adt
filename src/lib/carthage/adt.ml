@@ -1,22 +1,38 @@
 open Base
 
 type annot = A_type of string | A_var of string | A_field of string
-[@@deriving ord, sexp]
+[@@deriving eq, ord, sexp]
 
-type ('l, 'a) typ_t =
+let annot_of_string s =
+  let a = String.sub s ~pos:1 ~len:(String.length s - 1) in
+  match s.[0] with
+  | '%' -> Some (A_field a)
+  | '@' -> Some (A_var a)
+  | ':' -> Some (A_type a)
+  | _ -> None
+
+type simple = unit
+
+type annotated = annot list
+
+type with_loc = Micheline.Loc.t
+
+type with_loc_annotated = with_loc * annotated
+
+type 'a typ_t =
   | T_key
   | T_unit
   | T_signature
-  | T_option of ('l, 'a) typ
-  | T_list of ('l, 'a) typ
-  | T_set of ('l, 'a) typ
+  | T_option of 'a typ
+  | T_list of 'a typ
+  | T_set of 'a typ
   | T_operation
-  | T_contract of ('l, 'a) typ
-  | T_pair of ('l, 'a) typ * ('l, 'a) typ
-  | T_or of ('l, 'a) typ * ('l, 'a) typ
-  | T_lambda of ('l, 'a) typ * ('l, 'a) typ
-  | T_map of ('l, 'a) typ * ('l, 'a) typ
-  | T_big_map of ('l, 'a) typ * ('l, 'a) typ
+  | T_contract of 'a typ
+  | T_pair of 'a typ * 'a typ
+  | T_or of 'a typ * 'a typ
+  | T_lambda of 'a typ * 'a typ
+  | T_map of 'a typ * 'a typ
+  | T_big_map of 'a typ * 'a typ
   | T_chain_id
   | T_int
   | T_nat
@@ -27,19 +43,19 @@ type ('l, 'a) typ_t =
   | T_key_hash
   | T_timestamp
   | T_address
-[@@deriving ord, sexp]
+[@@deriving eq, ord, sexp]
 
-and ('l, 'a) typ = 'l * ('l, 'a) typ_t * 'a [@@deriving ord, sexp]
+and 'a typ = 'a typ_t * 'a [@@deriving eq, ord, sexp]
 
-and ('l, 'a) inst_t =
+type 'a inst_t =
   | I_noop
   | I_failwith
-  | I_seq of ('l, 'a) inst list
-  | I_if of ('l, 'a) inst * ('l, 'a) inst
-  | I_loop of ('l, 'a) inst
-  | I_loop_left of ('l, 'a) inst
-  | I_dip of ('l, 'a) inst
-  | I_dip_n of Bigint.t * ('l, 'a) inst
+  | I_seq of 'a inst list
+  | I_if of 'a inst * 'a inst
+  | I_loop of 'a inst
+  | I_loop_left of 'a inst
+  | I_dip of 'a inst
+  | I_dip_n of Bigint.t * 'a inst
   | I_exec
   | I_apply
   | I_drop
@@ -48,9 +64,9 @@ and ('l, 'a) inst_t =
   | I_swap
   | I_dig of Bigint.t
   | I_dug of Bigint.t
-  | I_push of ('l, 'a) typ * ('l, 'a) data
+  | I_push of 'a typ * 'a data
   | I_unit
-  | I_lambda of ('l, 'a) typ * ('l, 'a) typ * ('l, 'a) inst
+  | I_lambda of 'a typ * 'a typ * 'a inst
   | I_eq
   | I_neq
   | I_lt
@@ -78,29 +94,29 @@ and ('l, 'a) inst_t =
   | I_pair
   | I_car
   | I_cdr
-  | I_empty_set of ('l, 'a) typ
+  | I_empty_set of 'a typ
   | I_mem
   | I_update
-  | I_iter of ('l, 'a) inst
-  | I_empty_map of ('l, 'a) typ * ('l, 'a) typ
+  | I_iter of 'a inst
+  | I_empty_map of 'a typ * 'a typ
   | I_get
-  | I_map of ('l, 'a) inst
-  | I_empty_big_map of ('l, 'a) typ * ('l, 'a) typ
+  | I_map of 'a inst
+  | I_empty_big_map of 'a typ * 'a typ
   | I_some
-  | I_none of ('l, 'a) typ
-  | I_if_none of ('l, 'a) inst * ('l, 'a) inst
-  | I_left of ('l, 'a) typ
-  | I_right of ('l, 'a) typ
-  | I_if_left of ('l, 'a) inst * ('l, 'a) inst
+  | I_none of 'a typ
+  | I_if_none of 'a inst * 'a inst
+  | I_left of 'a typ
+  | I_right of 'a typ
+  | I_if_left of 'a inst * 'a inst
   | I_cons
-  | I_nil of ('l, 'a) typ
-  | I_if_cons of ('l, 'a) inst * ('l, 'a) inst
-  | I_create_contract of ('l, 'a) program
+  | I_nil of 'a typ
+  | I_if_cons of 'a inst * 'a inst
+  | I_create_contract of 'a program
   | I_transfer_tokens
   | I_set_delegate
   | I_balance
   | I_address
-  | I_contract of ('l, 'a) typ
+  | I_contract of 'a typ
   | I_source
   | I_sender
   | I_self
@@ -109,40 +125,36 @@ and ('l, 'a) inst_t =
   | I_now
   | I_chain_id
   | I_pack
-  | I_unpack of ('l, 'a) typ
+  | I_unpack of 'a typ
   | I_hash_key
   | I_blake2b
   | I_sha256
   | I_sha512
   | I_check_signature
-  | I_cast of ('l, 'a) typ
+  | I_cast of 'a typ
   | I_unpair
   | I_rename
 [@@deriving ord, sexp]
 
-and ('l, 'a) inst = 'l * ('l, 'a) inst_t * 'a [@@deriving ord, sexp]
+and 'a inst = 'a inst_t * 'a [@@deriving ord, sexp]
 
-and ('l, 'a) data_t =
+and 'a data_t =
   | D_int of Bigint.t
   | D_string of string
   | D_bytes of Bytes.t
   | D_unit
   | D_bool of bool
-  | D_pair of ('l, 'a) data * ('l, 'a) data
-  | D_left of ('l, 'a) data
-  | D_right of ('l, 'a) data
-  | D_some of ('l, 'a) data
+  | D_pair of 'a data * 'a data
+  | D_left of 'a data
+  | D_right of 'a data
+  | D_some of 'a data
   | D_none
-  | D_elt of ('l, 'a) data * ('l, 'a) data
-  | D_list of ('l, 'a) data list
-  | D_instruction of ('l, 'a) inst
+  | D_elt of 'a data * 'a data
+  | D_list of 'a data list
+  | D_instruction of 'a inst
 [@@deriving ord, sexp]
 
-and ('l, 'a) data = 'l * ('l, 'a) data_t [@@deriving ord, sexp]
+and 'a data = 'a data_t * 'a [@@deriving ord, sexp]
 
-and ('l, 'a) program = {
-  param : ('l, 'a) typ;
-  storage : ('l, 'a) typ;
-  code : ('l, 'a) inst;
-}
+and 'a program = { param : 'a typ; storage : 'a typ; code : 'a inst }
 [@@deriving ord, sexp]
