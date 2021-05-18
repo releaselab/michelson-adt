@@ -2,7 +2,7 @@
 %{
   open Node
 
-  let pos = Loc.loc_of_lexbuf_positions
+    let pos = Loc.loc_of_lexbuf_positions
 %}
 
 %token <Bigint.t> NUM
@@ -10,7 +10,7 @@
 %token <string> STRING
 %token <string> IDENT
 %token <string> ANNOT
-%token <string> SPEC
+%token <Node.spec * string> SPEC
 %token LB RB LP RP
 %token SEMICOLON MINUS 
 %token EOF

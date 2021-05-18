@@ -5,6 +5,10 @@
   exception Lexical_error of string
 
   let pos = Loc.loc_of_lexbuf_positions
+
+    let kwd = ["requires", Node.Spec_pre; "ensures", Node.Spec_post]
+
+  let kwd s = List.assoc s kwd
 }
 
 let letter = ['a'-'z' 'A'-'Z']
@@ -20,12 +24,12 @@ let comment = [^ '\n']* new_line
 let annot = ('%' | '@' | ':') ident*
 
 rule next_token = parse
-  | "/*@"
-      { spec 0 (Buffer.create 100) lexbuf }
+  | "/*@" space+ (ident as s)
+      { spec 0 (Buffer.create 100) (kwd s) lexbuf }
   | "/*"
       { comment 0 lexbuf }
-  | "#@" (comment as c)
-      { new_line lexbuf; SPEC c }
+  | "#@" space+ (ident as s) space+ (comment as c)
+      { new_line lexbuf; SPEC (kwd s, c) }
   | '#' comment
       { new_line lexbuf; next_token lexbuf}
   | new_line
@@ -46,21 +50,21 @@ rule next_token = parse
   | eof           { EOF }
   | _ as c        { raise (Lexical_error ("Illegal character: " ^ String.make 1 c)) }
 
-and spec counter buf = parse
+and spec counter buf s = parse
   | "/*" as c
       { Buffer.add_string buf c;
-        spec (counter + 1) buf lexbuf }
+        spec (counter + 1) buf s lexbuf }
   | "*/"
       { if counter = 0 then 
-          SPEC (Buffer.contents buf)
+          SPEC (s, Buffer.contents buf)
         else
-          spec (counter - 1) buf lexbuf }
+          spec (counter - 1) buf s lexbuf }
   | new_line as n
-      { Buffer.add_string buf n; new_line lexbuf; spec counter buf lexbuf }
+      { Buffer.add_string buf n; new_line lexbuf; spec counter buf s lexbuf }
   | eof
       { raise (Lexical_error "unterminated comment") }
   | _ as c
-      { Buffer.add_char buf c; spec counter buf lexbuf }
+      { Buffer.add_char buf c; spec counter buf s lexbuf }
   
 
 and comment counter = parse
