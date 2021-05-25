@@ -20,8 +20,8 @@
 %%
 
 start:
-    s=SPEC? LB e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? RB EOF
-  | s=SPEC? e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? EOF
+    s=SPEC* LB e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? RB EOF
+  | s=SPEC* e_1=application SEMICOLON e_2=application SEMICOLON e_3=application SEMICOLON? EOF
       { Seq (pos $startpos $endpos, [e_1; e_2; e_3], s) }
 
 application:
@@ -44,7 +44,7 @@ expr_arg:
   | s=STRING
       { String (pos $startpos $endpos, s) }
   | LB e=seq RB
-      { Seq (pos $startpos $endpos, e, None) }
+      { Seq (pos $startpos $endpos, e, []) }
 
 expr:
     a=application { a }
