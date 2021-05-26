@@ -37,7 +37,7 @@ let print_error_position l =
 
 let rec type_parse = function
   | Prim (loc, t, args, annots) ->
-      let t =
+      let value =
         match (t, args) with
         | "address", [] -> T_address
         | "big_map", [ t_k; t_v ] -> T_big_map (type_parse t_k, type_parse t_v)
@@ -71,7 +71,7 @@ let rec type_parse = function
             raise (Parse_error error_msg)
       in
       let annots = List.filter_map annots ~f:annot_of_string in
-      (t, (loc, annots))
+      { value; loc; annots }
   | Int (l, _) | String (l, _) | Bytes (l, _) | Seq (l, _, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
@@ -81,11 +81,11 @@ let rec type_parse = function
 let rec data_parse =
   let annots = [] in
   function
-  | Int (loc, n) -> (D_int n, (loc, annots))
-  | Bytes (loc, b) -> (D_bytes b, (loc, annots))
-  | String (loc, s) -> (D_string s, (loc, annots))
+  | Int (loc, n) -> { value = D_int n; loc; annots }
+  | Bytes (loc, b) -> { value = D_bytes b; loc; annots }
+  | String (loc, s) -> { value = D_string s; loc; annots }
   | Prim (loc, p, args, annots) ->
-      let d =
+      let value =
         match (p, args) with
         | "Unit", [] -> D_unit
         | "True", [] -> D_bool true
@@ -104,19 +104,24 @@ let rec data_parse =
             raise (Parse_error error_msg)
       in
       let annots = List.filter_map annots ~f:annot_of_string in
-      (d, (loc, annots))
+      { value; loc; annots }
   | Seq (loc, datas, _) -> (
-      try (D_list (List.map datas ~f:data_parse), (loc, annots))
+      try { value = D_list (List.map datas ~f:data_parse); loc; annots }
       with Parse_error _ ->
-        ( D_instruction (I_seq (List.map datas ~f:inst_parse), (loc, annots)),
-          (loc, annots) ))
+        {
+          value =
+            D_instruction
+              { value = I_seq (List.map datas ~f:inst_parse); loc; annots };
+          loc;
+          annots;
+        })
 
 and inst_parse = function
-  | Seq (l, s, _) ->
-      let i = I_seq (List.map s ~f:inst_parse) in
-      (i, (l, []))
+  | Seq (loc, s, _) ->
+      let value = I_seq (List.map s ~f:inst_parse) in
+      { value; loc; annots = [] }
   | Prim (loc, i, args, annots) ->
-      let i =
+      let value =
         match (i, args) with
         | "APPLY", [] -> I_apply
         | "EXEC", [] -> I_exec
@@ -216,7 +221,7 @@ and inst_parse = function
             raise (Parse_error error_msg)
       in
       let annots = List.filter_map annots ~f:annot_of_string in
-      (i, (loc, annots))
+      { value; loc; annots }
   | Int (l, _) | String (l, _) | Bytes (l, _) ->
       let error_msg =
         Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
@@ -224,7 +229,8 @@ and inst_parse = function
       raise (Parse_error error_msg)
 
 and code_parse l = function
-  | [ Seq (l, insts, _) ] -> (I_seq (List.map insts ~f:inst_parse), (l, []))
+  | [ Seq (loc, insts, _) ] ->
+      { value = I_seq (List.map insts ~f:inst_parse); loc; annots = [] }
   | Seq (_, _, _) :: _ :: _
   | (Int (_, _) | String (_, _) | Bytes (_, _) | Prim (_, _, _, _)) :: _
   | [] ->
@@ -288,11 +294,13 @@ and program_parse = function
              in
              raise (Parse_error error_msg) *)
           raise_s
-            (List.sexp_of_t (sexp_of_node Loc.sexp_of_t String.sexp_of_t) n))
+            (List.sexp_of_t
+               (Micheline.Node.sexp_of_node Loc.sexp_of_t String.sexp_of_t)
+               n))
   (* | Int (l, _) | String (l, _) | Bytes (l, _) | Prim (l, _, _, _) -> *)
   | n ->
       (* let error_msg =
            Stdlib.Format.sprintf "%s: syntax error@." (print_error_position l)
          in
          raise (Parse_error error_msg) *)
-      raise_s (sexp_of_node Loc.sexp_of_t String.sexp_of_t n)
+      raise_s (Micheline.Node.sexp_of_node Loc.sexp_of_t String.sexp_of_t n)

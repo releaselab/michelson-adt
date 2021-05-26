@@ -23,7 +23,7 @@
   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
   (dune :build)
-  base
+  core_kernel
   bignum
   hex
   ppx_deriving

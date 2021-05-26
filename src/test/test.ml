@@ -1,15 +1,17 @@
 open Alcotest
 
-let test dir parse_micheline parse_program name =
+let test dir parse_micheline parse_program typecheck name =
   let files = Sys.readdir dir in
+
   let create_test file =
     let parse_f () = parse_micheline (dir ^ file) in
     let test_f () =
       match parse_f () with
       | Ok ast -> (
           try
-            let _ = parse_program ast in
-            check pass "Ok" () ()
+            let ast, _ = parse_program ast in
+            if typecheck ast then check pass "Ok" () ()
+            else fail "Type check failed"
           with Michelson.Carthage.Parse.Parse_error e ->
             fail
               (Stdlib.Format.fprintf Stdlib.Format.str_formatter
@@ -29,13 +31,13 @@ let test dir parse_micheline parse_program name =
 
 let carthage =
   test "../../../../tests/carthage/" Michelson.Carthage.Parse.parse_program
-    Michelson.Carthage.Parse.program_parse "parsing carthage"
+    Michelson.Carthage.Parse.program_parse Michelson.Carthage.Typer.typecheck
+    "parsing carthage"
 
 let edo =
   test "../../../../tests/edo/" Michelson.Edo.Parse.parse_program
-    (fun n ->
-      let a, _ = Michelson.Edo.Parse.program_parse n in
-      a)
+    Michelson.Edo.Parse.program_parse
+    (fun _ -> true)
     "parsing edo"
 
 let () = run "Michelson parser" [ carthage; edo ]

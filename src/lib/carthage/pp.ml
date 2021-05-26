@@ -4,8 +4,8 @@ open Format
 let pp_print_list f ppf =
   fprintf ppf "{ %a }" (pp_print_list ~pp_sep:(fun fmt () -> fprintf fmt ";") f)
 
-let rec pp_typ ppf (t, _) =
-  match t with
+let rec pp_typ ppf t =
+  match t.value with
   | T_int -> fprintf ppf "int"
   | T_nat -> fprintf ppf "nat"
   | T_string -> fprintf ppf "string"
@@ -30,8 +30,8 @@ let rec pp_typ ppf (t, _) =
   | T_big_map (t_1, t_2) -> fprintf ppf "(big_map %a %a)" pp_typ t_1 pp_typ t_2
   | T_chain_id -> fprintf ppf "chain_id"
 
-let rec pp_data ppf (d, _) =
-  match d with
+let rec pp_data ppf d =
+  match d.value with
   | D_int d -> Bigint.pp ppf d
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes b -> fprintf ppf "%s" (Bytes.to_string b)
@@ -47,8 +47,8 @@ let rec pp_data ppf (d, _) =
   | D_instruction i -> pp_inst ppf i
 
 (* TODO: *)
-and pp_inst ppf (i, _) =
-  match i with
+and pp_inst ppf i =
+  match i.value with
   | I_rename -> fprintf ppf "RENAME"
   | I_abs -> fprintf ppf "ABS"
   | I_drop -> fprintf ppf "DROP"
