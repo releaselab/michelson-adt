@@ -19,6 +19,7 @@
 
 (package
  (name michelson)
+ (version 0.1)
  (synopsis
   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
