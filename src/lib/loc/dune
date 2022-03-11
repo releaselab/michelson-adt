@@ -1,6 +1,0 @@
-(library
- (name loc)
- (public_name michelson.loc)
- (libraries base)
- (preprocess
-  (pps ppx_deriving.ord ppx_sexp_conv)))

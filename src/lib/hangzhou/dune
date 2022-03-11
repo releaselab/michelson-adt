@@ -1,0 +1,12 @@
+(library
+ (name hangzhou)
+ (public_name michelson.hangzhou)
+ (libraries common tezos-micheline base bignum)
+ (inline_tests)
+ (preprocess
+  (pps
+   ppx_inline_test
+   ppx_assert
+   ppx_deriving.eq
+   ppx_deriving.ord
+   ppx_sexp_conv)))
