@@ -198,8 +198,7 @@ and inst =
   | I_transfer_tokens
   | I_unit
   | I_unpack of typ
-  | I_unpair
-  | I_unpair_n of Bigint.t
+  | I_unpair of Bigint.t
   | I_update_set
   | I_update_map
   | I_update_big_map

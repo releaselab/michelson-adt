@@ -26,4 +26,4 @@ let () =
   in
   let tests = Array.map files ~f:create_test in
   let tests = Array.to_list tests in
-  run "Michelson parser" [ ("parsing", tests) ]
+  run "parsing" [ ("parsing", tests) ]
