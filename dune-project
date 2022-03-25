@@ -24,7 +24,8 @@
   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
  (depends
   (dune :build)
-  core
+  (core
+   (<= v0.14.1))
   bignum
   (tezos-micheline
    (>= 7.0))
