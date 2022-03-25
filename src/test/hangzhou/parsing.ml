@@ -1,8 +1,8 @@
-open Core
+open! Core
 
 let () =
   let dir = "../../../../../tests/hangzhou/" in
-  let files = Sys.readdir dir in
+  let files = Sys_unix.readdir dir in
   let open Alcotest in
   let create_test file =
     let open Michelson.Hangzhou.Parser in

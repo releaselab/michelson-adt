@@ -2,7 +2,7 @@
 opam-version: "2.0"
 version: "0.1"
 synopsis:
-  "An OCaml library for parsing Michelson programs into an OCaml-usable AST"
+  "An OCaml library for parsing Michelson programs into an OCaml-usable AST."
 maintainer: ["João Santos Reis <joao.reis@ubi.pt>"]
 authors: ["João Santos Reis <joao.reis@ubi.pt>"]
 license: "MIT"
@@ -10,13 +10,13 @@ homepage: "https://gitlab.com/releaselab/fresco/michelson"
 bug-reports: "https://gitlab.com/releaselab/fresco/michelson/issues"
 depends: [
   "dune" {>= "2.7" & build}
-  "core" {<= "v0.14.1"}
+  "core"
+  "core_unix" {with-test}
   "bignum"
   "tezos-micheline" {>= "7.0"}
   "ppx_deriving"
   "bisect_ppx" {with-test & >= "2.5.0"}
   "alcotest" {with-test}
-  "ppx_inline_test" {with-test}
   "odoc" {with-doc}
 ]
 build: [

@@ -21,11 +21,11 @@
  (name michelson)
  (version 0.1)
  (synopsis
-  "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
+  "An OCaml library for parsing Michelson programs into an OCaml-usable AST.")
  (depends
   (dune :build)
-  (core
-   (<= v0.14.1))
+  core
+  (core_unix :with-test)
   bignum
   (tezos-micheline
    (>= 7.0))
@@ -34,5 +34,4 @@
    (and
     :with-test
     (>= 2.5.0)))
-  (alcotest :with-test)
-  (ppx_inline_test :with-test)))
+  (alcotest :with-test)))

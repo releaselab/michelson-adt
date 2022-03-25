@@ -1,5 +1,5 @@
 (tests
  (names parsing typing)
- (libraries core michelson alcotest)
+ (libraries core core_unix.sys_unix alcotest michelson)
  (preprocess
-  (pps ppx_inline_test ppx_assert ppx_sexp_conv ppx_deriving.eq)))
+  (pps ppx_assert ppx_sexp_conv ppx_deriving.eq)))
