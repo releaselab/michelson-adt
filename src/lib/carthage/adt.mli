@@ -1,5 +1,3 @@
-type annot = Common.Annot.t [@@deriving ord, sexp]
-
 type ('l, 'a) typ_t =
   | T_key
   | T_unit

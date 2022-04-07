@@ -10,7 +10,7 @@ homepage: "https://gitlab.com/releaselab/fresco/michelson"
 bug-reports: "https://gitlab.com/releaselab/fresco/michelson/issues"
 depends: [
   "dune" {>= "2.7" & build}
-  "core"
+  "core" {>= "v0.15.0"}
   "core_unix" {with-test}
   "bignum"
   "tezos-micheline" {>= "7.0"}

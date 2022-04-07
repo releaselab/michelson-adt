@@ -1,4 +1,4 @@
-type loc = Common.Loc.t
+type loc = Common.Loc.t [@@deriving ord, sexp]
 
 type 'a typ_t =
   | T_unit

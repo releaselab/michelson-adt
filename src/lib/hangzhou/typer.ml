@@ -118,12 +118,6 @@ let type_unit _loc stack =
   Stack.push stack T_unit;
   I_unit
 
-let%test_unit "unit_ok" =
-  let stack = Stack.create () in
-  [%test_result: inst] (type_unit dummy_loc stack) ~expect:I_unit;
-  [%test_result: typ option] (Stack.pop stack) ~expect:(Some T_unit);
-  assert (Stack.is_empty stack)
-
 (****************************************************************************)
 
 (* EQ *)
@@ -264,21 +258,6 @@ let type_isnat loc stack =
       I_isnat
   | _ -> raise (Type_error loc)
 
-let%test_unit "isnat_ok" =
-  let stack = Stack.create () in
-  Stack.push stack T_int;
-  [%test_result: inst] (type_isnat dummy_loc stack) ~expect:I_isnat;
-  [%test_result: typ option] (Stack.pop stack) ~expect:(Some (T_option T_nat));
-  assert (Stack.is_empty stack)
-
-let%test "isnat_nok" =
-  let stack = Stack.create () in
-  Stack.push stack T_nat;
-  try
-    let _ = type_isnat dummy_loc stack in
-    false
-  with Type_error _ -> true
-
 (****************************************************************************)
 
 (* INT *)
@@ -400,15 +379,6 @@ let type_ediv loc stack =
       Stack.push stack (T_option (T_pair (T_nat, T_mutez)));
       I_ediv_mutez
   | _ -> raise (Type_error loc)
-
-let%test_unit "ediv_nat_ok" =
-  let stack = Stack.create () in
-  Stack.push stack T_nat;
-  Stack.push stack T_nat;
-  [%test_result: inst] (type_ediv dummy_loc stack) ~expect:I_ediv_nat;
-  [%test_result: typ option] (Stack.pop stack)
-    ~expect:(Some (T_option (T_pair (T_nat, T_nat))));
-  assert (Stack.is_empty stack)
 
 (* LSL *)
 
@@ -635,12 +605,6 @@ let type_source _loc stack =
   Stack.push stack T_address;
   I_source
 
-let%test_unit "source_ok" =
-  let stack = Stack.create () in
-  [%test_result: inst] (type_source dummy_loc stack) ~expect:I_source;
-  [%test_result: typ option] (Stack.pop stack) ~expect:(Some T_address);
-  assert (Stack.is_empty stack)
-
 (******************************************************************************)
 
 (* SENDER *)
@@ -770,14 +734,6 @@ let type_check_signature loc stack =
 let type_total_voting_power _loc stack =
   Stack.push stack T_nat;
   I_total_voting_power
-
-let%test_unit "total_voting_power_ok" =
-  let stack = Stack.create () in
-  [%test_result: inst]
-    (type_total_voting_power dummy_loc stack)
-    ~expect:I_total_voting_power;
-  [%test_result: typ option] (Stack.pop stack) ~expect:(Some T_nat);
-  assert (Stack.is_empty stack)
 
 (****************************************************************)
 
@@ -922,24 +878,6 @@ let type_contract loc stack t =
       Stack.push stack (T_option (T_contract t));
       I_contract t
   | _ -> raise (Type_error loc)
-
-let%test_unit "contract_ok" =
-  let stack = Stack.create () in
-  Stack.push stack T_address;
-  [%test_result: inst]
-    (type_contract dummy_loc stack T_int)
-    ~expect:(I_contract T_int);
-  [%test_result: typ option] (Stack.pop stack)
-    ~expect:(Some (T_option (T_contract T_int)));
-  assert (Stack.is_empty stack)
-
-let%test "contract_nok" =
-  let stack = Stack.create () in
-  Stack.push stack T_int;
-  try
-    let _ = type_contract dummy_loc stack T_address in
-    false
-  with Type_error _ -> true
 
 (****************************************************************************)
 
@@ -1531,15 +1469,13 @@ and type_seq p stack i_l =
   | x :: xs ->
       let failed, x = type_inst x in
       let failed, seq =
-        List.fold_left xs
-          ~init:(failed, [ x ])
-          ~f:
-            (fun (failed, acc) -> function
-              | (loc, _, _) as i ->
-                  if failed then raise (Type_error loc)
-                  else
-                    let failed, i = type_inst i in
-                    (failed, i :: acc))
+        List.fold_left xs ~init:(failed, [ x ]) ~f:(fun (failed, acc) ->
+          function
+          | (loc, _, _) as i ->
+              if failed then raise (Type_error loc)
+              else
+                let failed, i = type_inst i in
+                (failed, i :: acc))
       in
       (failed, I_seq (List.rev seq))
 

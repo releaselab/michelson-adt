@@ -1,5 +1,5 @@
 open Base
-open Michelson.Hangzhou
+open Michelson_adt.Hangzhou
 open Adt
 open Typed_adt
 open Typer
@@ -80,6 +80,20 @@ let swap_ok () =
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let swap_tests = Alcotest.[ test_case "swap_ok" `Quick swap_ok ]
+
+(****************************************************************************)
+
+let unit_ok () =
+  let stack = Stack.create () in
+  Alcotest.(check' inst)
+    ~msg:"instruction" ~expected:I_unit
+    ~actual:(type_unit dummy_loc stack);
+  Alcotest.(check' (option typ))
+    ~msg:"stack" ~expected:(Some T_unit) ~actual:(Stack.pop stack);
+  Alcotest.(check' bool)
+    ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
+
+let unit_tests = Alcotest.[ test_case "unit_ok" `Quick unit_ok ]
 
 (****************************************************************************)
 
@@ -497,6 +511,37 @@ let neg_tests =
       test_case "neg_bls12_381_g1_ok" `Quick neg_bls12_381_g1_ok;
       test_case "neg_bls12_381_g2_ok" `Quick neg_bls12_381_g2_ok;
       test_case "neg_nok" `Quick neg_nok;
+    ]
+
+(****************************************************************************)
+
+let isnat_ok () =
+  let stack = Stack.create () in
+  Stack.push stack T_int;
+  Alcotest.(check' inst)
+    ~msg:"instruction" ~expected:I_isnat
+    ~actual:(type_isnat dummy_loc stack);
+  Alcotest.(check' (option typ))
+    ~msg:"stack" ~expected:(Some (T_option T_nat)) ~actual:(Stack.pop stack);
+  Alcotest.(check' bool)
+    ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
+
+let isnat_nok () =
+  let stack = Stack.create () in
+  Stack.push stack T_nat;
+  let error =
+    try
+      let _ = type_isnat dummy_loc stack in
+      false
+    with Type_error _ -> true
+  in
+  Alcotest.(check' bool) ~msg:"type error" ~expected:true ~actual:error
+
+let isnat_tests =
+  Alcotest.
+    [
+      test_case "isnat_ok" `Quick isnat_ok;
+      test_case "isnat_nok" `Quick isnat_nok;
     ]
 
 (****************************************************************************)
@@ -1008,6 +1053,20 @@ let ediv_int_ok () =
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
+let ediv_nat_ok () =
+  let stack = Stack.create () in
+  Stack.push stack T_nat;
+  Stack.push stack T_nat;
+  Alcotest.(check' inst)
+    ~msg:"instruction" ~expected:I_ediv_nat
+    ~actual:(type_ediv dummy_loc stack);
+  Alcotest.(check' (option typ))
+    ~msg:"stack value"
+    ~expected:(Some (T_option (T_pair (T_nat, T_nat))))
+    ~actual:(Stack.pop stack);
+  Alcotest.(check' bool)
+    ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
+
 let ediv_mutez_nat_ok () =
   let stack = Stack.create () in
   Stack.push stack T_nat;
@@ -1065,6 +1124,7 @@ let ediv_tests =
     [
       test_case "ediv_nat_int_ok" `Quick ediv_nat_int_ok;
       test_case "ediv_int_ok" `Quick ediv_int_ok;
+      test_case "ediv_nat_ok" `Quick ediv_nat_ok;
       test_case "ediv_mutez_nat_ok" `Quick ediv_mutez_nat_ok;
       test_case "ediv_mutez_nat_nok" `Quick ediv_mutez_nat_nok;
       test_case "ediv_mutez_ok" `Quick ediv_mutez_ok;
@@ -1807,6 +1867,20 @@ let address_tests =
 
 (****************************************************************)
 
+let source_ok () =
+  let stack = Stack.create () in
+  Alcotest.(check' inst)
+    ~msg:"instruction" ~expected:I_source
+    ~actual:(type_source dummy_loc stack);
+  Alcotest.(check' (option typ))
+    ~msg:"stack" ~expected:(Some T_address) ~actual:(Stack.pop stack);
+  Alcotest.(check' bool)
+    ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
+
+let source_tests = Alcotest.[ test_case "source_ok" `Quick source_ok ]
+
+(****************************************************************)
+
 let sender_ok () =
   let stack = Stack.create () in
   Alcotest.(check' inst)
@@ -2182,6 +2256,21 @@ let check_signature_tests =
       test_case "check_signature_ok" `Quick check_signature_ok;
       test_case "check_signature_nok" `Quick check_signature_nok;
     ]
+
+(****************************************************************)
+
+let total_voting_power_ok () =
+  let stack = Stack.create () in
+  Alcotest.(check' inst)
+    ~msg:"instruction" ~expected:I_total_voting_power
+    ~actual:(type_total_voting_power dummy_loc stack);
+  Alcotest.(check' (option typ))
+    ~msg:"stack" ~expected:(Some T_nat) ~actual:(Stack.pop stack);
+  Alcotest.(check' bool)
+    ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
+
+let total_voting_power_tests =
+  Alcotest.[ test_case "total_voting_power_ok" `Quick total_voting_power_ok ]
 
 (****************************************************************)
 
@@ -2610,6 +2699,38 @@ let empty_big_map_ok () =
 
 let empty_big_map_tests =
   Alcotest.[ test_case "empty_big_map_ok" `Quick empty_big_map_ok ]
+
+(**********************************************************************)
+
+let contract_ok () =
+  let stack = Stack.create () in
+  Stack.push stack T_address;
+  Alcotest.(check' inst)
+    ~msg:"instruction" ~expected:(I_contract T_int)
+    ~actual:(type_contract dummy_loc stack T_int);
+  Alcotest.(check' (option typ))
+    ~msg:"stack value" ~expected:(Some (T_option (T_contract T_int)))
+    ~actual:(Stack.pop stack);
+  Alcotest.(check' bool)
+    ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
+
+let contract_nok () =
+  let stack = Stack.create () in
+  Stack.push stack T_int;
+  let error =
+    try
+      let _ = type_contract dummy_loc stack T_address in
+      false
+    with Type_error _ -> true
+  in
+  Alcotest.(check' bool) ~msg:"type error" ~expected:true ~actual:error
+
+let contract_tests =
+  Alcotest.
+    [
+      test_case "contract_ok" `Quick contract_ok;
+      test_case "contract_nok" `Quick contract_nok;
+    ]
 
 (**********************************************************************)
 
@@ -4300,6 +4421,7 @@ let () =
       ("drop", drop_tests);
       ("dup", dup_tests);
       ("swap", swap_tests);
+      ("unit", unit_tests);
       ("eq", eq_tests);
       ("neq", neq_tests);
       ("lt", lt_tests);
@@ -4334,6 +4456,7 @@ let () =
       ("set_delegate", set_delegate_tests);
       ("balance", balance_tests);
       ("address", address_tests);
+      ("source", source_tests);
       ("sender", sender_tests);
       ("self", self_tests);
       ("implicit_account", implicit_account_tests);
@@ -4348,6 +4471,7 @@ let () =
       ("sha512", sha512_tests);
       ("keccak", keccak_tests);
       ("check_signature", check_signature_tests);
+      ("total_voting_power", total_voting_power_tests);
       ("pairing_check", pairing_check_tests);
       ("sapling_verify_update", sapling_verify_update_tests);
       ("sapling_empty_state", sapling_empty_state_tests);
@@ -4363,6 +4487,7 @@ let () =
       ("empty_map", empty_map_tests);
       ("empty_big_map", empty_big_map_tests);
       ("nil", nil_tests);
+      ("contract", contract_tests);
       ("create_contract", create_contract_tests);
       ("unpack", unpack_tests);
       ("cast", cast_tests);
