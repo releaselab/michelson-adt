@@ -1,21 +1,22 @@
-# Michelson parser and OCaml ADT
+# Michelson ADT
 
-An OCaml library for parsing Michelson programs into an OCaml ADT.
+An OCaml library with and ADT representation of Michelson smart contracts syntax.
 
 ## Install instructions
 
 ### Using dune
 
 ```bash
-git clone https://gitlab.com/releaselab/fresco/michelson.git
-cd michelson
+git clone https://github.com/releaselab/michelson-adt.git
+cd michelson-adt
 dune build @install
 dune install
 ```
 
 ### Using opam
+
 ```bash
-opam pin add michelson https://gitlab.com/releaselab/fresco/michelson.git
+opam pin add michelson https://github.com/releaselab/michelson-adt.git
 ```
 
 ---

@@ -2,12 +2,12 @@
 opam-version: "2.0"
 version: "0.1"
 synopsis:
-  "An OCaml library for parsing Michelson programs into an OCaml-usable AST"
+  "An OCaml library with and ADT representation of Michelson smart contracts syntax"
 maintainer: ["João Santos Reis <joao.reis@ubi.pt>"]
 authors: ["João Santos Reis <joao.reis@ubi.pt>"]
 license: "MIT"
-homepage: "https://gitlab.com/releaselab/fresco/michelson"
-bug-reports: "https://gitlab.com/releaselab/fresco/michelson/issues"
+homepage: "https://github.com/releaselab/michelson-adt"
+bug-reports: "https://github.com/releaselab/michelson-adt/issues"
 depends: [
   "dune" {>= "2.7" & build}
   "core" {>= "v0.15.0"}
@@ -15,7 +15,6 @@ depends: [
   "bignum"
   "tezos-micheline" {>= "7.0"}
   "ppx_deriving"
-  "bisect_ppx" {with-test & >= "2.5.0"}
   "alcotest" {with-test}
   "odoc" {with-doc}
 ]
@@ -33,4 +32,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://gitlab.com/releaselab/fresco/michelson.git"
+dev-repo: "git+https://github.com/releaselab/michelson-adt.git"

@@ -1,5 +1,5 @@
 (library
- (name common)
+ (name common_adt)
  (public_name michelson-adt.common)
  (libraries tezos-micheline base bignum)
  (preprocess

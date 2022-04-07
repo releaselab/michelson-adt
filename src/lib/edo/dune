@@ -1,5 +1,5 @@
 (library
- (name edo)
+ (name edo_adt)
  (public_name michelson-adt.edo)
  (libraries tezos-micheline base bignum)
  (preprocess

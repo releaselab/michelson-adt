@@ -1,6 +1,6 @@
 open Base
 
-type loc = Common.Loc.t [@@deriving ord, sexp]
+type loc = Common_adt.Loc.t [@@deriving ord, sexp]
 
 type 'a typ_t =
   | T_unit

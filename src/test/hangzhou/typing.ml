@@ -1,5 +1,5 @@
 open Base
-open Michelson_adt.Hangzhou
+open Hangzhou_adt
 open Adt
 open Typed_adt
 open Typer

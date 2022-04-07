@@ -4,7 +4,7 @@ open Typed_adt
 
 exception Type_error of loc
 
-let dummy_loc = Common.Loc.dummy_loc
+let dummy_loc = Common_adt.Loc.dummy_loc
 let create_with_loc i = (dummy_loc, i, ())
 
 let rec is_comparable_type = function

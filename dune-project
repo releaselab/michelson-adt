@@ -5,11 +5,11 @@
 (generate_opam_files true)
 
 (source
- (uri "git+https://gitlab.com/releaselab/fresco/michelson.git"))
+ (uri "git+https://github.com/releaselab/michelson-adt.git"))
 
-(bug_reports "https://gitlab.com/releaselab/fresco/michelson/issues")
+(bug_reports "https://github.com/releaselab/michelson-adt/issues")
 
-(homepage "https://gitlab.com/releaselab/fresco/michelson")
+(homepage "https://github.com/releaselab/michelson-adt")
 
 (license MIT)
 
@@ -21,7 +21,7 @@
  (name michelson-adt)
  (version 0.1)
  (synopsis
-  "An OCaml library for parsing Michelson programs into an OCaml-usable AST")
+  "An OCaml library with and ADT representation of Michelson smart contracts syntax")
  (depends
   (dune :build)
   (core
@@ -31,8 +31,4 @@
   (tezos-micheline
    (>= 7.0))
   ppx_deriving
-  (bisect_ppx
-   (and
-    :with-test
-    (>= 2.5.0)))
   (alcotest :with-test)))

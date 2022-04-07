@@ -1,5 +1,5 @@
 (library
- (name carthage)
+ (name carthage_adt)
  (public_name michelson-adt.carthage)
  (libraries tezos-micheline base bignum)
  (preprocess
