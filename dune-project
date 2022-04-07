@@ -1,6 +1,6 @@
 (lang dune 2.7)
 
-(name michelson)
+(name michelson-adt)
 
 (generate_opam_files true)
 
@@ -18,7 +18,7 @@
 (maintainers "Jo\195\163o Santos Reis <joao.reis@ubi.pt>")
 
 (package
- (name michelson)
+ (name michelson-adt)
  (version 0.1)
  (synopsis
   "An OCaml library for parsing Michelson programs into an OCaml-usable AST")

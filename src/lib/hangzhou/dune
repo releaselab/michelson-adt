@@ -1,6 +1,6 @@
 (library
  (name hangzhou)
- (public_name michelson.hangzhou)
+ (public_name michelson-adt.hangzhou)
  (libraries common tezos-micheline base bignum)
  (inline_tests)
  (preprocess

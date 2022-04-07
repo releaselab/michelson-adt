@@ -1,4 +1,4 @@
 (library
  (name michelson)
- (public_name michelson)
+ (public_name michelson-adt)
  (libraries common carthage edo hangzhou))
