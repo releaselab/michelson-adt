@@ -1,0 +1,6 @@
+(library
+ (name hangzhou_adt)
+ (public_name michelson-adt.hangzhou)
+ (libraries common_adt tezos-micheline base bignum)
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.ord ppx_sexp_conv)))

@@ -1,6 +1,3 @@
-type annot = A_type of string | A_var of string | A_field of string
-[@@deriving ord, sexp]
-
 type ('l, 'a) typ_t =
   | T_key
   | T_unit

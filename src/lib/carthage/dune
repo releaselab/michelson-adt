@@ -1,6 +1,6 @@
 (library
- (name carthage)
- (public_name michelson.carthage)
- (libraries loc tezos-micheline base bignum)
+ (name carthage_adt)
+ (public_name michelson-adt.carthage)
+ (libraries tezos-micheline base bignum)
  (preprocess
   (pps ppx_deriving.ord ppx_sexp_conv)))
