@@ -1,43 +1,9 @@
-open Base
+open! Core
 
-type typ =
-  | T_unit
-  | T_never
-  | T_bool
-  | T_int
-  | T_nat
-  | T_string
-  | T_chain_id
-  | T_bytes
-  | T_mutez
-  | T_key_hash
-  | T_key
-  | T_signature
-  | T_timestamp
-  | T_address
-  | T_option of typ
-  | T_list of typ
-  | T_set of typ
-  | T_operation
-  | T_contract of typ
-  | T_ticket of typ
-  | T_pair of typ * typ
-  | T_or of typ * typ
-  | T_lambda of typ * typ
-  | T_map of typ * typ
-  | T_big_map of typ * typ
-  | T_bls12_381_g1
-  | T_bls12_381_g2
-  | T_bls12_381_fr
-  | T_sapling_transaction of Bigint.t
-  | T_sapling_state of Bigint.t
-  | T_chest
-  | T_chest_key
-[@@deriving sexp, ord, eq]
+type annot = Common_adt.Annot.t [@@deriving ord, sexp]
+type 'a node = 'a Adt.node [@@deriving ord, sexp]
 
-type data = typ * data_t
-
-and data_t =
+type data_t =
   | D_int of Bigint.t
   | D_nat of Bigint.t
   | D_string of string
@@ -53,7 +19,9 @@ and data_t =
   | D_map of (data * data) list
   | D_instruction of inst
 
-and inst =
+and data = (Adt.typ * data_t) node
+
+and inst_t =
   | I_abs
   | I_add_nat
   | I_add_nat_int
@@ -81,7 +49,7 @@ and inst =
   | I_concat_bytes
   | I_concat_list_bytes
   | I_cons
-  | I_contract of typ
+  | I_contract of Adt.typ
   | I_create_contract of program
   | I_dig of Bigint.t
   | I_dip of inst
@@ -95,9 +63,9 @@ and inst =
   | I_ediv_int
   | I_ediv_mutez_nat
   | I_ediv_mutez
-  | I_empty_big_map of typ * typ
-  | I_empty_map of typ * typ
-  | I_empty_set of typ
+  | I_empty_big_map of Adt.typ * Adt.typ
+  | I_empty_map of Adt.typ * Adt.typ
+  | I_empty_set of Adt.typ
   | I_eq
   | I_exec
   | I_failwith
@@ -122,9 +90,9 @@ and inst =
   | I_iter_list of inst
   | I_join_tickets
   | I_keccak
-  | I_lambda of typ * typ * inst
+  | I_lambda of Adt.typ * Adt.typ * inst
   | I_le
-  | I_left of typ
+  | I_left of Adt.typ
   | I_level
   | I_loop of inst
   | I_loop_left of inst
@@ -152,8 +120,8 @@ and inst =
   | I_neg_bls12_381_fr
   | I_neq
   | I_never
-  | I_nil of typ
-  | I_none of typ
+  | I_nil of Adt.typ
+  | I_none of Adt.typ
   | I_not_bool
   | I_not_nat
   | I_not_int
@@ -164,9 +132,9 @@ and inst =
   | I_pair
   | I_pair_n of Bigint.t
   | I_pairing_check
-  | I_push of typ * data
+  | I_push of data
   | I_read_ticket
-  | I_right of typ
+  | I_right of Adt.typ
   | I_sapling_empty_state of Bigint.t
   | I_sapling_verify_update
   | I_self
@@ -197,7 +165,7 @@ and inst =
   | I_total_voting_power
   | I_transfer_tokens
   | I_unit
-  | I_unpack of typ
+  | I_unpack of Adt.typ
   | I_unpair of Bigint.t
   | I_update_set
   | I_update_map
@@ -210,9 +178,10 @@ and inst =
   | I_seq of inst list
   | I_noop
   | I_open_chest
-  | I_cast of typ
+  | I_cast of Adt.typ
   | I_create_account
-[@@deriving sexp, ord, eq]
+[@@deriving sexp, ord]
 
+and inst = (inst_t * annot list) node
 and seq = Seq_i of inst | Seq_s of inst * seq
-and program = { param : typ; storage : typ; code : inst }
+and program = { param : Adt.typ; storage : Adt.typ; code : inst }

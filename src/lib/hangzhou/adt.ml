@@ -1,8 +1,9 @@
-open Base
+open! Core
 
-type loc = Common_adt.Loc.t [@@deriving ord, sexp]
+type annot = Common_adt.Annot.t [@@deriving ord, sexp]
+type 'a node = 'a Common_adt.Node.t [@@deriving ord, sexp]
 
-type 'a typ_t =
+type typ_t =
   | T_unit
   | T_never
   | T_bool
@@ -17,17 +18,17 @@ type 'a typ_t =
   | T_signature
   | T_timestamp
   | T_address
-  | T_option of 'a typ
-  | T_list of 'a typ
-  | T_set of 'a typ
+  | T_option of typ
+  | T_list of typ
+  | T_set of typ
   | T_operation
-  | T_contract of 'a typ
-  | T_ticket of 'a typ
-  | T_pair of 'a typ * 'a typ
-  | T_or of 'a typ * 'a typ
-  | T_lambda of 'a typ * 'a typ
-  | T_map of 'a typ * 'a typ
-  | T_big_map of 'a typ * 'a typ
+  | T_contract of typ
+  | T_ticket of typ
+  | T_pair of typ * typ
+  | T_or of typ * typ
+  | T_lambda of typ * typ
+  | T_map of typ * typ
+  | T_big_map of typ * typ
   | T_bls12_381_g1
   | T_bls12_381_g2
   | T_bls12_381_fr
@@ -35,19 +36,18 @@ type 'a typ_t =
   | T_sapling_state of Bigint.t
   | T_chest
   | T_chest_key
-[@@deriving ord, sexp]
 
-and 'a typ = loc * 'a typ_t * 'a [@@deriving ord, sexp]
+and typ = (typ_t * annot list) node [@@deriving ord, sexp]
 
-and 'a inst_t =
+type inst_t =
   | I_noop
   | I_failwith
-  | I_seq of 'a inst list
-  | I_if of 'a inst * 'a inst
-  | I_loop of 'a inst
-  | I_loop_left of 'a inst
-  | I_dip of 'a inst
-  | I_dip_n of Bigint.t * 'a inst
+  | I_seq of inst list
+  | I_if of inst * inst
+  | I_loop of inst
+  | I_loop_left of inst
+  | I_dip of inst
+  | I_dip_n of Bigint.t * inst
   | I_exec
   | I_apply
   | I_drop
@@ -57,9 +57,9 @@ and 'a inst_t =
   | I_swap
   | I_dig of Bigint.t
   | I_dug of Bigint.t
-  | I_push of 'a typ * 'a data
+  | I_push of typ * data
   | I_unit
-  | I_lambda of 'a typ * 'a typ * 'a inst
+  | I_lambda of typ * typ * inst
   | I_eq
   | I_neq
   | I_lt
@@ -87,30 +87,30 @@ and 'a inst_t =
   | I_pair
   | I_car
   | I_cdr
-  | I_empty_set of 'a typ
+  | I_empty_set of typ
   | I_mem
   | I_update
-  | I_iter of 'a inst
-  | I_empty_map of 'a typ * 'a typ
+  | I_iter of inst
+  | I_empty_map of typ * typ
   | I_get
-  | I_map of 'a inst
-  | I_empty_big_map of 'a typ * 'a typ
+  | I_map of inst
+  | I_empty_big_map of typ * typ
   | I_some
-  | I_none of 'a typ
-  | I_if_none of 'a inst * 'a inst
-  | I_left of 'a typ
-  | I_right of 'a typ
-  | I_if_left of 'a inst * 'a inst
+  | I_none of typ
+  | I_if_none of inst * inst
+  | I_left of typ
+  | I_right of typ
+  | I_if_left of inst * inst
   | I_cons
-  | I_nil of 'a typ
-  | I_if_cons of 'a inst * 'a inst
-  | I_create_contract of 'a program
+  | I_nil of typ
+  | I_if_cons of inst * inst
+  | I_create_contract of program
   | I_create_account
   | I_transfer_tokens
   | I_set_delegate
   | I_balance
   | I_address
-  | I_contract of 'a typ
+  | I_contract of typ
   | I_source
   | I_sender
   | I_self
@@ -120,7 +120,7 @@ and 'a inst_t =
   | I_now
   | I_chain_id
   | I_pack
-  | I_unpack of 'a typ
+  | I_unpack of typ
   | I_hash_key
   | I_blake2b
   | I_keccak
@@ -128,7 +128,7 @@ and 'a inst_t =
   | I_sha256
   | I_sha512
   | I_check_signature
-  | I_cast of 'a typ
+  | I_cast of typ
   | I_unpair
   | I_unpair_n of Bigint.t
   | I_rename
@@ -148,27 +148,23 @@ and 'a inst_t =
   | I_update_n of Bigint.t
   | I_open_chest
   | I_get_and_update
-[@@deriving ord, sexp]
 
-and 'a inst = loc * 'a inst_t * 'a [@@deriving ord, sexp]
+and inst = (inst_t * annot list) node [@@deriving ord, sexp]
 
-and 'a data_t =
+and data_t =
   | D_int of Bigint.t
   | D_string of string
   | D_bytes of Bytes.t
   | D_unit
   | D_bool of bool
-  | D_pair of 'a data * 'a data
-  | D_left of 'a data
-  | D_right of 'a data
-  | D_some of 'a data
+  | D_pair of data * data
+  | D_left of data
+  | D_right of data
+  | D_some of data
   | D_none
-  | D_elt of 'a data * 'a data
-  | D_list of 'a data list
-  | D_instruction of 'a inst
-[@@deriving ord, sexp]
+  | D_elt of data * data
+  | D_list of data list
+  | D_instruction of inst
 
-and 'a data = loc * 'a data_t [@@deriving ord, sexp]
-
-and 'a program = { param : 'a typ; storage : 'a typ; code : 'a inst }
-[@@deriving ord, sexp]
+and data = data_t node [@@deriving ord, sexp]
+and program = { param : typ; storage : typ; code : inst } [@@deriving ord, sexp]

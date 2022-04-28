@@ -10,8 +10,8 @@ homepage: "https://github.com/releaselab/michelson-adt"
 bug-reports: "https://github.com/releaselab/michelson-adt/issues"
 depends: [
   "dune" {>= "2.7" & build}
-  "core" {>= "v0.15.0"}
-  "core_unix" {with-test}
+  "core" {>= "v0.15"}
+  "core_unix" {with-test & >= "v0.15"}
   "bignum"
   "tezos-micheline" {>= "7.0"}
   "ppx_deriving"

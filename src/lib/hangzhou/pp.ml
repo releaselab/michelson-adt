@@ -1,11 +1,12 @@
 open Adt
+open Common_adt
 open Format
 
 let pp_print_list f ppf =
   fprintf ppf "{ %a }" (pp_print_list ~pp_sep:(fun fmt () -> fprintf fmt ";") f)
 
-let rec pp_typ ppf (_, t, _) =
-  match t with
+let rec pp_typ ppf t =
+  match fst t.Node.value with
   | T_int -> fprintf ppf "int"
   | T_nat -> fprintf ppf "nat"
   | T_string -> fprintf ppf "string"
@@ -39,8 +40,8 @@ let rec pp_typ ppf (_, t, _) =
   | T_chest -> fprintf ppf "chest"
   | T_chest_key -> fprintf ppf "chest_key"
 
-let rec pp_data ppf (_, d) =
-  match d with
+let rec pp_data ppf d =
+  match d.Node.value with
   | D_int d -> Bigint.pp ppf d
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes b -> fprintf ppf "%s" (Bytes.to_string b)
@@ -56,8 +57,8 @@ let rec pp_data ppf (_, d) =
   | D_instruction i -> pp_inst ppf i
 
 (* TODO: *)
-and pp_inst ppf (_, i, _) =
-  match i with
+and pp_inst ppf i =
+  match fst i.value with
   | I_rename -> fprintf ppf "RENAME"
   | I_abs -> fprintf ppf "ABS"
   | I_drop -> fprintf ppf "DROP"
