@@ -1,3 +1,0 @@
-{ parameter address ;
-  storage (list address) ;
-  code { DUP ; CAR ; DIP { CDR } ; CONS ; NIL operation ; PAIR } }

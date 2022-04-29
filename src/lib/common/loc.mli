@@ -8,3 +8,4 @@ include Sexpable.S with type t := t
 
 val dummy_loc : t
 val to_string : t -> string
+val pp : ?max_lines:int -> Format.formatter -> t -> unit

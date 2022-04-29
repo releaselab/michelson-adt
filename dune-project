@@ -34,4 +34,6 @@
   (tezos-micheline
    (>= 7.0))
   ppx_deriving
+  (pp_loc
+   (>= 2.0))
   (alcotest :with-test)))

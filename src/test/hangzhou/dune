@@ -1,5 +1,0 @@
-(test
- (name typing)
- (libraries core core_unix.sys_unix alcotest michelson-adt.hangzhou)
- (preprocess
-  (pps ppx_assert ppx_sexp_conv ppx_deriving.eq)))

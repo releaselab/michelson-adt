@@ -1,1 +1,0 @@
-{ storage int ; parameter int ; code { CAR ; NIL operation ; PAIR } }
