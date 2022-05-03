@@ -29,24 +29,27 @@ let typ =
   Alcotest.testable (fun fmt t -> Sexp.pp fmt (sexp_of_t t)) ( = )
 
 let dummy_loc = Common_adt.Loc.dummy_loc
-let create_typ t = Typed_adt.Typ.create 0 t
+let create_adt_typ t = Typed_adt.Typ.create 0 t
 let create_inst i = Adt.Inst.create 0 i
 let create_inst_typed i = Typed_adt.Inst.create 0 i
 let create_data d = Typed_adt.Data.create 0 d
+let create_typ (t : Typ.t') = (t, [])
 
 let abs_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_abs ~actual:(type_abs dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let abs_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_abs dummy_loc stack in
@@ -63,7 +66,7 @@ let abs_tests =
 
 let drop_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_drop Bigint.one)
     ~actual:(type_drop dummy_loc stack);
@@ -76,13 +79,18 @@ let drop_tests = Alcotest.[ test_case "drop_ok" `Quick drop_ok ]
 
 let dup_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
-    ~msg:"instruction" ~expected:I_dup ~actual:(type_dup dummy_loc stack);
+    ~msg:"instruction" ~expected:(I_dup Bigint.one)
+    ~actual:(type_dup dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -92,15 +100,19 @@ let dup_tests = Alcotest.[ test_case "dup_ok" `Quick dup_ok ]
 
 let swap_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_swap
     ~actual:(type_swap dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -114,7 +126,9 @@ let unit_ok () =
     ~msg:"instruction" ~expected:I_unit
     ~actual:(type_unit dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Unit) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Unit))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -124,17 +138,19 @@ let unit_tests = Alcotest.[ test_case "unit_ok" `Quick unit_ok ]
 
 let eq_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_eq ~actual:(type_eq dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let eq_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_eq dummy_loc stack in
@@ -150,17 +166,19 @@ let eq_tests =
 
 let neq_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_neq ~actual:(type_neq dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let neq_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_neq dummy_loc stack in
@@ -177,17 +195,19 @@ let neq_tests =
 
 let lt_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_lt ~actual:(type_lt dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let lt_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_lt dummy_loc stack in
@@ -203,17 +223,19 @@ let lt_tests =
 
 let gt_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_gt ~actual:(type_gt dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let gt_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_gt dummy_loc stack in
@@ -229,17 +251,19 @@ let gt_tests =
 
 let le_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_le ~actual:(type_le dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let le_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_le dummy_loc stack in
@@ -255,17 +279,19 @@ let le_tests =
 
 let ge_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ge ~actual:(type_ge dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ge_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_ge dummy_loc stack in
@@ -281,30 +307,34 @@ let ge_tests =
 
 let or_bool_ok () =
   let stack = create_stack () in
-  Stack.push stack Bool;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ Bool);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_or_bool ~actual:(type_or dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let or_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_or_nat ~actual:(type_or dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let or_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_or dummy_loc stack in
@@ -325,42 +355,48 @@ let or_tests =
 
 let and_bool_ok () =
   let stack = create_stack () in
-  Stack.push stack Bool;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ Bool);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_and_bool ~actual:(type_and dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let and_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_and_nat ~actual:(type_and dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let and_int_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_and_int_nat
     ~actual:(type_and dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let and_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_and dummy_loc stack in
@@ -382,23 +418,27 @@ let and_tests =
 
 let xor_bool_ok () =
   let stack = create_stack () in
-  Stack.push stack Bool;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ Bool);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_xor_bool ~actual:(type_xor dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let xor_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_xor_nat ~actual:(type_xor dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -413,37 +453,43 @@ let xor_tests =
 
 let not_bool_ok () =
   let stack = create_stack () in
-  Stack.push stack Bool;
+  Stack.push stack (create_typ Bool);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_not_bool ~actual:(type_not dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let not_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_not_nat ~actual:(type_not dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let not_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_not_int ~actual:(type_not dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let not_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
+  Stack.push stack (create_typ String);
   let error =
     try
       let _ = type_not dummy_loc stack in
@@ -465,60 +511,70 @@ let not_tests =
 
 let neg_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_neg_int ~actual:(type_neg dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let neg_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_int_nat ~actual:(type_neg dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let neg_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_fr;
+  Stack.push stack (create_typ Bls12_381_fr);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_neg_bls12_381_fr
     ~actual:(type_neg dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let neg_bls12_381_g1_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g1;
+  Stack.push stack (create_typ Bls12_381_g1);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_neg_bls12_381_g1
     ~actual:(type_neg dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_g1) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_g1))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let neg_bls12_381_g2_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g2;
+  Stack.push stack (create_typ Bls12_381_g2);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_neg_bls12_381_g2
     ~actual:(type_neg dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_g2) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_g2))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let neg_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
+  Stack.push stack (create_typ String);
   let error =
     try
       let _ = type_neg dummy_loc stack in
@@ -542,18 +598,20 @@ let neg_tests =
 
 let isnat_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_isnat
     ~actual:(type_isnat dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some (Option Nat)) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ (Option (create_typ Nat))))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let isnat_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_isnat dummy_loc stack in
@@ -573,28 +631,32 @@ let isnat_tests =
 
 let int_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_int_nat ~actual:(type_int dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let int_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_fr;
+  Stack.push stack (create_typ Bls12_381_fr);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_int_bls12_381_fr
     ~actual:(type_int dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let int_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_int dummy_loc stack in
@@ -615,115 +677,135 @@ let int_tests =
 
 let add_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_nat ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_nat_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_nat_int
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_nat_int
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_int ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_timestamp_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Timestamp;
-  Stack.push stack Int;
-  Stack.push stack Int;
-  Stack.push stack Timestamp;
+  Stack.push stack (create_typ Timestamp);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Timestamp);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_timestamp_int
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Timestamp) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Timestamp))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_timestamp_int
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Timestamp) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Timestamp))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_mutez_ok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Mutez);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_mutez ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Mutez) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Mutez))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_bls12_381_g1_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g1;
-  Stack.push stack Bls12_381_g1;
+  Stack.push stack (create_typ Bls12_381_g1);
+  Stack.push stack (create_typ Bls12_381_g1);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_bls12_381_g1
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_g1) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_g1))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_bls12_381_g2_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g2;
-  Stack.push stack Bls12_381_g2;
+  Stack.push stack (create_typ Bls12_381_g2);
+  Stack.push stack (create_typ Bls12_381_g2);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_bls12_381_g2
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_g2) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_g2))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Bls12_381_fr;
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Bls12_381_fr);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_add_bls12_381_fr
     ~actual:(type_add dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let add_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Mutez);
   let error =
     try
       let _ = type_add dummy_loc stack in
@@ -750,61 +832,71 @@ let add_tests =
 
 let sub_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_nat ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sub_nat_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_nat_int
     ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_nat_int
     ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sub_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_int ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sub_timestamp_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Timestamp;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Timestamp);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_timestamp_int
     ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Timestamp) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Timestamp))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sub_timestamp_int_nok () =
   let stack = create_stack () in
-  Stack.push stack Timestamp;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Timestamp);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_sub dummy_loc stack in
@@ -815,24 +907,28 @@ let sub_timestamp_int_nok () =
 
 let sub_timestamp_ok () =
   let stack = create_stack () in
-  Stack.push stack Timestamp;
-  Stack.push stack Timestamp;
+  Stack.push stack (create_typ Timestamp);
+  Stack.push stack (create_typ Timestamp);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_timestamp
     ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sub_mutez_ok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Mutez);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sub_mutez ~actual:(type_sub dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Mutez) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Mutez))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -852,80 +948,94 @@ let sub_tests =
 
 let mul_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_nat ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_nat_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_nat_int
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_nat_int
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_int ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_mutez_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Mutez);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_mutez_nat
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Mutez) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Mutez))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_mutez_nat
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Mutez) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Mutez))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_bls12_381_g1_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Bls12_381_g1;
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Bls12_381_g1);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_bls12_381_g1_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_g1) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_g1))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_bls12_381_g1_bls12_381_fr_nok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g1;
-  Stack.push stack Bls12_381_fr;
+  Stack.push stack (create_typ Bls12_381_g1);
+  Stack.push stack (create_typ Bls12_381_fr);
   let error =
     try
       let _ = type_mul dummy_loc stack in
@@ -936,20 +1046,22 @@ let mul_bls12_381_g1_bls12_381_fr_nok () =
 
 let mul_bls12_381_g2_bls12_681_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Bls12_381_g2;
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Bls12_381_g2);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_bls12_381_g2_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_g2) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_g2))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_bls12_381_g2_bls12_381_fr_nok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g2;
-  Stack.push stack Bls12_381_fr;
+  Stack.push stack (create_typ Bls12_381_g2);
+  Stack.push stack (create_typ Bls12_381_fr);
   let error =
     try
       let _ = type_mul dummy_loc stack in
@@ -960,58 +1072,68 @@ let mul_bls12_381_g2_bls12_381_fr_nok () =
 
 let mul_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Bls12_381_fr;
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Bls12_381_fr);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_bls12_381_fr_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_nat_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_nat_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_nat_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_int_bls12_381_fr_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Bls12_381_fr;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Bls12_381_fr);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_int_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mul_int_bls12_381_fr
     ~actual:(type_mul dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bls12_381_fr) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bls12_381_fr))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mul_nok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_mul dummy_loc stack in
@@ -1043,73 +1165,88 @@ let mul_tests =
 
 let ediv_nat_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ediv_nat_int
     ~actual:(type_ediv dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Int, Nat))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option (create_typ (Pair (create_typ Int, create_typ Nat))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ediv_nat_int
     ~actual:(type_ediv dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Int, Nat))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option (create_typ (Pair (create_typ Int, create_typ Nat))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ediv_int_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ediv_int
     ~actual:(type_ediv dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Int, Nat))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option (create_typ (Pair (create_typ Int, create_typ Nat))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ediv_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ediv_nat
     ~actual:(type_ediv dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Nat, Nat))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option (create_typ (Pair (create_typ Nat, create_typ Nat))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ediv_mutez_nat_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Mutez);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ediv_mutez_nat
     ~actual:(type_ediv dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Mutez, Mutez))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option (create_typ (Pair (create_typ Mutez, create_typ Mutez))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ediv_mutez_nat_nok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_ediv dummy_loc stack in
@@ -1120,22 +1257,25 @@ let ediv_mutez_nat_nok () =
 
 let ediv_mutez_ok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Mutez);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ediv_mutez
     ~actual:(type_ediv dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Nat, Mutez))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option (create_typ (Pair (create_typ Nat, create_typ Mutez))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ediv_nok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_ediv dummy_loc stack in
@@ -1160,19 +1300,21 @@ let ediv_tests =
 
 let lsl_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_lsl ~actual:(type_lsl dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let lsl_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_lsl dummy_loc stack in
@@ -1189,19 +1331,21 @@ let lsl_tests =
 
 let lsr_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_lsr ~actual:(type_lsr dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let lsr_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_lsr dummy_loc stack in
@@ -1218,20 +1362,22 @@ let lsr_tests =
 
 let compare_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_compare
     ~actual:(type_compare dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let compare_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_compare dummy_loc stack in
@@ -1242,8 +1388,8 @@ let compare_nok () =
 
 let compare_nok2 () =
   let stack = create_stack () in
-  Stack.push stack Bls12_381_g1;
-  Stack.push stack Bls12_381_g1;
+  Stack.push stack (create_typ Bls12_381_g1);
+  Stack.push stack (create_typ Bls12_381_g1);
   let error =
     try
       let _ = type_compare dummy_loc stack in
@@ -1264,47 +1410,55 @@ let compare_tests =
 
 let concat_string_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack String;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_concat_string
     ~actual:(type_concat dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let concat_list_string_ok () =
   let stack = create_stack () in
-  Stack.push stack (List String);
+  Stack.push stack (create_typ (List (create_typ String)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_concat_list_string
     ~actual:(type_concat dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let concat_bytes_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_concat_bytes
     ~actual:(type_concat dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let concat_list_bytes_ok () =
   let stack = create_stack () in
-  Stack.push stack (List Bytes);
+  Stack.push stack (create_typ (List (create_typ Bytes)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_concat_list_bytes
     ~actual:(type_concat dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1321,62 +1475,72 @@ let concat_tests =
 
 let size_set_ok () =
   let stack = create_stack () in
-  Stack.push stack (Set Bytes);
+  Stack.push stack (create_typ (Set (create_typ Bytes)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_size_set
     ~actual:(type_size dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let size_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Map (Nat, String));
+  Stack.push stack (create_typ (Map (create_typ Nat, create_typ String)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_size_map
     ~actual:(type_size dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let size_list_ok () =
   let stack = create_stack () in
-  Stack.push stack (List String);
+  Stack.push stack (create_typ (List (create_typ String)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_size_list
     ~actual:(type_size dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let size_string_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_size_string
     ~actual:(type_size dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let size_bytes_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_size_bytes
     ~actual:(type_size dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let size_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_size dummy_loc stack in
@@ -1400,35 +1564,39 @@ let size_tests =
 
 let slice_string_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_slice_string
     ~actual:(type_slice dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (Option String))
+    ~msg:"stack value"
+    ~expected:(Some (create_typ (Option (create_typ String))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let slice_bytes_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Bytes);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_slice_bytes
     ~actual:(type_slice dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Option Bytes)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Bytes))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let slice_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_slice dummy_loc stack in
@@ -1449,14 +1617,14 @@ let slice_tests =
 
 let pair_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack String;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_pair
     ~actual:(type_pair dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (String, Int)))
+    ~expected:(Some (create_typ (Pair (create_typ String, create_typ Int))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -1467,17 +1635,19 @@ let pair_tests = Alcotest.[ test_case "pair_ok" `Quick pair_ok ]
 
 let car_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (String, Int));
+  Stack.push stack (create_typ (Pair (create_typ String, create_typ Int)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_car ~actual:(type_car dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let car_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_car dummy_loc stack in
@@ -1494,17 +1664,19 @@ let car_tests =
 
 let cdr_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (String, Int));
+  Stack.push stack (create_typ (Pair (create_typ String, create_typ Int)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_cdr ~actual:(type_cdr dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let cdr_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_cdr dummy_loc stack in
@@ -1521,42 +1693,48 @@ let cdr_tests =
 
 let mem_set_ok () =
   let stack = create_stack () in
-  Stack.push stack (Set String);
-  Stack.push stack String;
+  Stack.push stack (create_typ (Set (create_typ String)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mem_set ~actual:(type_mem dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mem_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Map (String, Int));
-  Stack.push stack String;
+  Stack.push stack (create_typ (Map (create_typ String, create_typ Int)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mem_map ~actual:(type_mem dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mem_big_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Big_map (String, Int));
-  Stack.push stack String;
+  Stack.push stack (create_typ (Big_map (create_typ String, create_typ Int)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_mem_big_map
     ~actual:(type_mem dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let mem_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack String;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
   let error =
     try
       let _ = type_mem dummy_loc stack in
@@ -1578,51 +1756,54 @@ let mem_tests =
 
 let update_set_ok () =
   let stack = create_stack () in
-  Stack.push stack (Set String);
-  Stack.push stack Bool;
-  Stack.push stack String;
+  Stack.push stack (create_typ (Set (create_typ String)));
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_update_set
     ~actual:(type_update dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Set String)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Set (create_typ String))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Map (String, Int));
-  Stack.push stack (Option Int);
-  Stack.push stack String;
+  Stack.push stack (create_typ (Map (create_typ String, create_typ Int)));
+  Stack.push stack (create_typ (Option (create_typ Int)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_update_map
     ~actual:(type_update dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Map (String, Int)))
+    ~expected:(Some (create_typ (Map (create_typ String, create_typ Int))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_big_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Big_map (String, Int));
-  Stack.push stack (Option Int);
-  Stack.push stack String;
+  Stack.push stack (create_typ (Big_map (create_typ String, create_typ Int)));
+  Stack.push stack (create_typ (Option (create_typ Int)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_update_map
     ~actual:(type_update dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Big_map (String, Int)))
+    ~expected:(Some (create_typ (Big_map (create_typ String, create_typ Int))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Bool;
-  Stack.push stack String;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ String);
   let error =
     try
       let _ = type_update dummy_loc stack in
@@ -1644,29 +1825,35 @@ let update_tests =
 
 let get_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Map (String, Int));
-  Stack.push stack String;
+  Stack.push stack (create_typ (Map (create_typ String, create_typ Int)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_get_map ~actual:(type_get dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Option Int)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_big_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Big_map (String, Int));
-  Stack.push stack String;
+  Stack.push stack (create_typ (Big_map (create_typ String, create_typ Int)));
+  Stack.push stack (create_typ String);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_get_big_map
     ~actual:(type_get dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Option Int)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack String;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
   let error =
     try
       let _ = type_get dummy_loc stack in
@@ -1687,11 +1874,14 @@ let get_tests =
 
 let some_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_some
     ~actual:(type_some dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Option Int)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1701,14 +1891,19 @@ let some_tests = Alcotest.[ test_case "some_ok" `Quick some_ok ]
 
 let none_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_none (create_typ T_int))
-    ~actual:(type_none dummy_loc stack (create_typ T_int));
-  Alcotest.(check (option typ)) "stack" (Some (Option Int)) (Stack.pop stack);
+    ~expected:(I_none (create_adt_typ T_int))
+    ~actual:(type_none dummy_loc stack (create_adt_typ T_int));
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1718,20 +1913,22 @@ let none_tests = Alcotest.[ test_case "none_ok" `Quick none_ok ]
 
 let cons_ok () =
   let stack = create_stack () in
-  Stack.push stack (List Int);
-  Stack.push stack Int;
+  Stack.push stack (create_typ (List (create_typ Int)));
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_cons
     ~actual:(type_cons dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some (List Int)) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ (List (create_typ Int))))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let cons_nok () =
   let stack = create_stack () in
-  Stack.push stack (List Nat);
-  Stack.push stack Int;
+  Stack.push stack (create_typ (List (create_typ Nat)));
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_cons dummy_loc stack in
@@ -1742,8 +1939,8 @@ let cons_nok () =
 
 let cons_nok2 () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_cons dummy_loc stack in
@@ -1764,22 +1961,24 @@ let cons_tests =
 
 let transfer_tokens_ok () =
   let stack = create_stack () in
-  Stack.push stack (Contract Nat);
-  Stack.push stack Mutez;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ (Contract (create_typ Nat)));
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_transfer_tokens
     ~actual:(type_transfer_tokens dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Operation) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Operation))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let transfer_tokens_nok () =
   let stack = create_stack () in
-  Stack.push stack (Contract Nat);
-  Stack.push stack Nat;
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ (Contract (create_typ Nat)));
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Mutez);
   let error =
     try
       let _ = type_transfer_tokens dummy_loc stack in
@@ -1790,9 +1989,9 @@ let transfer_tokens_nok () =
 
 let transfer_tokens_nok2 () =
   let stack = create_stack () in
-  Stack.push stack (Contract Int);
-  Stack.push stack Mutez;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ (Contract (create_typ Int)));
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_transfer_tokens dummy_loc stack in
@@ -1813,18 +2012,20 @@ let transfer_tokens_tests =
 
 let set_delegate_ok () =
   let stack = create_stack () in
-  Stack.push stack (Option Key_hash);
+  Stack.push stack (create_typ (Option (create_typ Key_hash)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_set_delegate
     ~actual:(type_set_delegate dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Operation) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Operation))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let set_delegate_nok () =
   let stack = create_stack () in
-  Stack.push stack Key_hash;
+  Stack.push stack (create_typ Key_hash);
   let error =
     try
       let _ = type_set_delegate dummy_loc stack in
@@ -1848,7 +2049,9 @@ let balance_ok () =
     ~msg:"instruction" ~expected:I_balance
     ~actual:(type_balance dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Mutez) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Mutez))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1858,18 +2061,20 @@ let balance_tests = Alcotest.[ test_case "balance_ok" `Quick balance_ok ]
 
 let address_ok () =
   let stack = create_stack () in
-  Stack.push stack (Contract Nat);
+  Stack.push stack (create_typ (Contract (create_typ Nat)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_address
     ~actual:(type_address dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Address) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Address))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let address_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_address dummy_loc stack in
@@ -1893,7 +2098,9 @@ let source_ok () =
     ~msg:"instruction" ~expected:I_source
     ~actual:(type_source dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Address) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Address))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1907,7 +2114,9 @@ let sender_ok () =
     ~msg:"instruction" ~expected:I_sender
     ~actual:(type_sender dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Address) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Address))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1919,8 +2128,11 @@ let self_ok () =
   let stack = create_stack () in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_self
-    ~actual:(type_self dummy_loc stack (create_typ T_nat));
-  Alcotest.(check (option typ)) "stack" (Some (Contract Nat)) (Stack.pop stack);
+    ~actual:(type_self dummy_loc stack (create_adt_typ T_nat) None);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Contract (create_typ Nat))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1934,7 +2146,9 @@ let amount_ok () =
     ~msg:"instruction" ~expected:I_amount
     ~actual:(type_amount dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Mutez) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Mutez))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -1944,19 +2158,20 @@ let amount_tests = Alcotest.[ test_case "amount_ok" `Quick amount_ok ]
 
 let implicit_account_ok () =
   let stack = create_stack () in
-  Stack.push stack Key_hash;
+  Stack.push stack (create_typ Key_hash);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_implicit_account
     ~actual:(type_implicit_account dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (Contract Unit))
+    ~msg:"stack value"
+    ~expected:(Some (create_typ (Contract (create_typ Unit))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let implicit_account_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_implicit_account dummy_loc stack in
@@ -1976,18 +2191,20 @@ let implicit_account_tests =
 
 let voting_power_ok () =
   let stack = create_stack () in
-  Stack.push stack Key_hash;
+  Stack.push stack (create_typ Key_hash);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_voting_power
     ~actual:(type_voting_power dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let voting_power_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_voting_power dummy_loc stack in
@@ -2010,7 +2227,9 @@ let now_ok () =
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_now ~actual:(type_now dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Timestamp) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Timestamp))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2024,7 +2243,9 @@ let chain_id_ok () =
     ~msg:"instruction" ~expected:I_chain_id
     ~actual:(type_chain_id dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Chain_id) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Chain_id))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2034,18 +2255,20 @@ let chain_id_tests = Alcotest.[ test_case "chain_id_ok" `Quick chain_id_ok ]
 
 let pack_ok () =
   let stack = create_stack () in
-  Stack.push stack (List Nat);
+  Stack.push stack (create_typ (List (create_typ Nat)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_pack
     ~actual:(type_pack dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let pack_nok () =
   let stack = create_stack () in
-  Stack.push stack Operation;
+  Stack.push stack (create_typ Operation);
   let error =
     try
       let _ = type_pack dummy_loc stack in
@@ -2062,18 +2285,20 @@ let pack_tests =
 
 let hash_key_ok () =
   let stack = create_stack () in
-  Stack.push stack Key;
+  Stack.push stack (create_typ Key);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_hash_key
     ~actual:(type_hash_key dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Key_hash) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Key_hash))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let hash_key_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_hash_key dummy_loc stack in
@@ -2093,18 +2318,20 @@ let hash_key_tests =
 
 let blake2b_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_blake2b
     ~actual:(type_blake2b dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let blake2b_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_blake2b dummy_loc stack in
@@ -2124,18 +2351,20 @@ let blake2b_tests =
 
 let sha3_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sha3
     ~actual:(type_sha3 dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sha3_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_sha3 dummy_loc stack in
@@ -2152,18 +2381,20 @@ let sha3_tests =
 
 let sha256_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sha256
     ~actual:(type_sha256 dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sha256_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_sha256 dummy_loc stack in
@@ -2183,18 +2414,20 @@ let sha256_tests =
 
 let sha512_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sha512
     ~actual:(type_sha512 dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sha512_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_sha512 dummy_loc stack in
@@ -2214,18 +2447,20 @@ let sha512_tests =
 
 let keccak_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_keccak
     ~actual:(type_keccak dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let keccak_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_keccak dummy_loc stack in
@@ -2245,22 +2480,24 @@ let keccak_tests =
 
 let check_signature_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
-  Stack.push stack Signature;
-  Stack.push stack Key;
+  Stack.push stack (create_typ Bytes);
+  Stack.push stack (create_typ Signature);
+  Stack.push stack (create_typ Key);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_check_signature
     ~actual:(type_check_signature dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let check_signature_nok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
-  Stack.push stack Key;
-  Stack.push stack Signature;
+  Stack.push stack (create_typ Bytes);
+  Stack.push stack (create_typ Key);
+  Stack.push stack (create_typ Signature);
   let error =
     try
       let _ = type_check_signature dummy_loc stack in
@@ -2284,7 +2521,9 @@ let total_voting_power_ok () =
     ~msg:"instruction" ~expected:I_total_voting_power
     ~actual:(type_total_voting_power dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2295,18 +2534,23 @@ let total_voting_power_tests =
 
 let pairing_check_ok () =
   let stack = create_stack () in
-  Stack.push stack (List (Pair (Bls12_381_g1, Bls12_381_g2)));
+  Stack.push stack
+    (create_typ
+       (List
+          (create_typ (Pair (create_typ Bls12_381_g1, create_typ Bls12_381_g2)))));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_pairing_check
     ~actual:(type_pairing_check dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bool) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bool))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let pairing_check_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_pairing_check dummy_loc stack in
@@ -2326,22 +2570,27 @@ let pairing_check_tests =
 
 let sapling_verify_update_ok () =
   let stack = create_stack () in
-  Stack.push stack (Sapling_state Bigint.one);
-  Stack.push stack (Sapling_transaction Bigint.one);
+  Stack.push stack (create_typ (Sapling_state Bigint.one));
+  Stack.push stack (create_typ (Sapling_transaction Bigint.one));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_sapling_verify_update
     ~actual:(type_sapling_verify_update dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Int, Sapling_state Bigint.one))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option
+               (create_typ
+                  (Pair (create_typ Int, create_typ (Sapling_state Bigint.one)))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let sapling_verify_update_nok () =
   let stack = create_stack () in
-  Stack.push stack (Sapling_transaction Bigint.one);
-  Stack.push stack (Sapling_state Bigint.one);
+  Stack.push stack (create_typ (Sapling_transaction Bigint.one));
+  Stack.push stack (create_typ (Sapling_state Bigint.one));
   let error =
     try
       let _ = type_sapling_verify_update dummy_loc stack in
@@ -2352,8 +2601,8 @@ let sapling_verify_update_nok () =
 
 let sapling_verify_update_nok2 () =
   let stack = create_stack () in
-  Stack.push stack (Sapling_state Bigint.zero);
-  Stack.push stack (Sapling_transaction Bigint.one);
+  Stack.push stack (create_typ (Sapling_state Bigint.zero));
+  Stack.push stack (create_typ (Sapling_transaction Bigint.one));
   let error =
     try
       let _ = type_sapling_verify_update dummy_loc stack in
@@ -2378,7 +2627,8 @@ let sapling_empty_state_ok () =
     ~msg:"instruction" ~expected:(I_sapling_empty_state Bigint.one)
     ~actual:(type_sapling_empty_state dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (Sapling_state Bigint.one))
+    ~msg:"stack value"
+    ~expected:(Some (create_typ (Sapling_state Bigint.one)))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -2390,19 +2640,22 @@ let sapling_empty_state_tests =
 
 let ticket_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_ticket
     ~actual:(type_ticket dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Ticket Int)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Ticket (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let ticket_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_ticket dummy_loc stack in
@@ -2422,21 +2675,29 @@ let ticket_tests =
 
 let read_ticket_ok () =
   let stack = create_stack () in
-  Stack.push stack (Ticket Int);
+  Stack.push stack (create_typ (Ticket (create_typ Int)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_read_ticket
     ~actual:(type_read_ticket dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Address, Pair (Int, Nat))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ Address,
+                 create_typ (Pair (create_typ Int, create_typ Nat)) ))))
     ~actual:(Stack.pop stack);
-  Alcotest.(check (option typ)) "stack" (Some (Ticket Int)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Ticket (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let read_ticket_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_read_ticket dummy_loc stack in
@@ -2456,22 +2717,29 @@ let read_ticket_tests =
 
 let split_ticket_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Nat, Nat));
-  Stack.push stack (Ticket Int);
+  Stack.push stack (create_typ (Pair (create_typ Nat, create_typ Nat)));
+  Stack.push stack (create_typ (Ticket (create_typ Int)));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_split_ticket
     ~actual:(type_split_ticket dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Option (Pair (Ticket Int, Ticket Int))))
+    ~expected:
+      (Some
+         (create_typ
+            (Option
+               (create_typ
+                  (Pair
+                     ( create_typ (Ticket (create_typ Int)),
+                       create_typ (Ticket (create_typ Int)) ))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let split_ticket_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack (Ticket Int);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ (Ticket (create_typ Int)));
   let error =
     try
       let _ = type_split_ticket dummy_loc stack in
@@ -2491,19 +2759,25 @@ let split_ticket_tests =
 
 let join_tickets_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Ticket Int, Ticket Int));
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ (Ticket (create_typ Int)),
+            create_typ (Ticket (create_typ Int)) )));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_join_tickets
     ~actual:(type_join_tickets dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (Option (Ticket Int)))
+    ~msg:"stack value"
+    ~expected:
+      (Some (create_typ (Option (create_typ (Ticket (create_typ Int))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let join_tickets_nok () =
   let stack = create_stack () in
-  Stack.push stack (Ticket Int);
+  Stack.push stack (create_typ (Ticket (create_typ Int)));
   let error =
     try
       let _ = type_join_tickets dummy_loc stack in
@@ -2514,7 +2788,11 @@ let join_tickets_nok () =
 
 let join_tickets_nok2 () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Ticket Int, Ticket Nat));
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ (Ticket (create_typ Int)),
+            create_typ (Ticket (create_typ Nat)) )));
   let error =
     try
       let _ = type_join_tickets dummy_loc stack in
@@ -2539,7 +2817,9 @@ let self_address_ok () =
     ~msg:"instruction" ~expected:I_self_address
     ~actual:(type_self_address dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Address) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Address))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2554,7 +2834,9 @@ let level_ok () =
     ~msg:"instruction" ~expected:I_level
     ~actual:(type_level dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2564,24 +2846,24 @@ let level_tests = Alcotest.[ test_case "level_ok" `Quick level_ok ]
 
 let open_chest_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Chest;
-  Stack.push stack Chest_key;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Chest);
+  Stack.push stack (create_typ Chest_key);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_open_chest
     ~actual:(type_open_chest dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Or (Bytes, Bool)))
+    ~expected:(Some (create_typ (Or (create_typ Bytes, create_typ Bool))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let open_chest_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Nat;
-  Stack.push stack Chest_key;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Chest_key);
   let error =
     try
       let _ = type_open_chest dummy_loc stack in
@@ -2601,41 +2883,47 @@ let open_chest_tests =
 
 let get_and_update_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Map (Int, Nat));
-  Stack.push stack (Option Nat);
-  Stack.push stack Int;
+  Stack.push stack (create_typ (Map (create_typ Int, create_typ Nat)));
+  Stack.push stack (create_typ (Option (create_typ Nat)));
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_get_and_update_map
     ~actual:(type_get_and_update dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Option Nat)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Nat))))
+    (Stack.pop stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Map (Int, Nat)))
+    ~expected:(Some (create_typ (Map (create_typ Int, create_typ Nat))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_and_update_big_map_ok () =
   let stack = create_stack () in
-  Stack.push stack (Big_map (Int, Nat));
-  Stack.push stack (Option Nat);
-  Stack.push stack Int;
+  Stack.push stack (create_typ (Big_map (create_typ Int, create_typ Nat)));
+  Stack.push stack (create_typ (Option (create_typ Nat)));
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_get_and_update_big_map
     ~actual:(type_get_and_update dummy_loc stack);
-  Alcotest.(check (option typ)) "stack" (Some (Option Nat)) (Stack.pop stack);
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Nat))))
+    (Stack.pop stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Big_map (Int, Nat)))
+    ~expected:(Some (create_typ (Big_map (create_typ Int, create_typ Nat))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_and_update_nok () =
   let stack = create_stack () in
-  Stack.push stack (Map (Int, Nat));
-  Stack.push stack (Option Nat);
-  Stack.push stack Nat;
+  Stack.push stack (create_typ (Map (create_typ Int, create_typ Nat)));
+  Stack.push stack (create_typ (Option (create_typ Nat)));
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_get_and_update dummy_loc stack in
@@ -2658,10 +2946,12 @@ let empty_set_ok () =
   let stack = create_stack () in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_empty_set (create_typ T_int))
-    ~actual:(type_empty_set dummy_loc stack (create_typ T_int));
+    ~expected:(I_empty_set (create_adt_typ T_int))
+    ~actual:(type_empty_set dummy_loc stack (create_adt_typ T_int));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some (Set Int)) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ (Set (create_typ Int))))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2673,10 +2963,12 @@ let nil_ok () =
   let stack = create_stack () in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_nil (create_typ T_int))
-    ~actual:(type_nil dummy_loc stack (create_typ T_int));
+    ~expected:(I_nil (create_adt_typ T_int))
+    ~actual:(type_nil dummy_loc stack (create_adt_typ T_int));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some (List Int)) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ (List (create_typ Int))))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2688,12 +2980,13 @@ let empty_map_ok () =
   let stack = create_stack () in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_empty_map (create_typ T_int, create_typ T_nat))
+    ~expected:(I_empty_map (create_adt_typ T_int, create_adt_typ T_nat))
     ~actual:
-      (type_empty_map dummy_loc stack (create_typ T_int) (create_typ T_nat));
+      (type_empty_map dummy_loc stack (create_adt_typ T_int)
+         (create_adt_typ T_nat));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Map (Int, Nat)))
+    ~expected:(Some (create_typ (Map (create_typ Int, create_typ Nat))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -2706,12 +2999,13 @@ let empty_big_map_ok () =
   let stack = create_stack () in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_empty_big_map (create_typ T_int, create_typ T_nat))
+    ~expected:(I_empty_big_map (create_adt_typ T_int, create_adt_typ T_nat))
     ~actual:
-      (type_empty_big_map dummy_loc stack (create_typ T_int) (create_typ T_nat));
+      (type_empty_big_map dummy_loc stack (create_adt_typ T_int)
+         (create_adt_typ T_nat));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Big_map (Int, Nat)))
+    ~expected:(Some (create_typ (Big_map (create_typ Int, create_typ Nat))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -2723,23 +3017,25 @@ let empty_big_map_tests =
 
 let contract_ok () =
   let stack = create_stack () in
-  Stack.push stack Address;
+  Stack.push stack (create_typ Address);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_contract (create_typ T_int))
-    ~actual:(type_contract dummy_loc stack (create_typ T_int));
+    ~expected:(I_contract (create_adt_typ T_int))
+    ~actual:(type_contract dummy_loc stack (create_adt_typ T_int));
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (Option (Contract Int)))
+    ~msg:"stack value"
+    ~expected:
+      (Some (create_typ (Option (create_typ (Contract (create_typ Int))))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let contract_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
-      let _ = type_contract dummy_loc stack (create_typ T_address) in
+      let _ = type_contract dummy_loc stack (create_adt_typ T_address) in
       false
     with Type_error _ -> true
   in
@@ -2756,20 +3052,20 @@ let contract_tests =
 
 let create_contract_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Mutez;
-  Stack.push stack (Option Key_hash);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ (Option (create_typ Key_hash)));
 
   let p =
     {
-      Typed_adt.param = create_typ T_nat;
-      storage = create_typ T_int;
+      Typed_adt.param = create_adt_typ T_nat;
+      storage = create_adt_typ T_int;
       code =
         create_inst_typed
           (I_seq
              [
                create_inst_typed I_cdr;
-               create_inst_typed (I_nil (create_typ T_operation));
+               create_inst_typed (I_nil (create_adt_typ T_operation));
                create_inst_typed I_pair;
              ]);
     }
@@ -2778,27 +3074,31 @@ let create_contract_ok () =
     ~msg:"instruction" ~expected:(I_create_contract p)
     ~actual:(type_create_contract dummy_loc stack p);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Operation) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Operation))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Address) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Address))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let create_contract_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack (Option Key_hash);
-  Stack.push stack Mutez;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (Option (create_typ Key_hash)));
+  Stack.push stack (create_typ Mutez);
   let p =
     {
-      Typed_adt.param = create_typ T_nat;
-      storage = create_typ T_int;
+      Typed_adt.param = create_adt_typ T_nat;
+      storage = create_adt_typ T_int;
       code =
         create_inst_typed
           (I_seq
              [
                create_inst_typed I_cdr;
-               create_inst_typed (I_nil (create_typ T_operation));
+               create_inst_typed (I_nil (create_adt_typ T_operation));
                create_inst_typed I_pair;
              ]);
     }
@@ -2813,19 +3113,19 @@ let create_contract_nok () =
 
 let create_contract_nok2 () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Mutez;
-  Stack.push stack (Option Key_hash);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ (Option (create_typ Key_hash)));
   let p =
     {
-      Typed_adt.param = create_typ T_nat;
-      storage = create_typ T_string;
+      Typed_adt.param = create_adt_typ T_nat;
+      storage = create_adt_typ T_string;
       code =
         create_inst_typed
           (I_seq
              [
                create_inst_typed I_cdr;
-               create_inst_typed (I_nil (create_typ T_operation));
+               create_inst_typed (I_nil (create_adt_typ T_operation));
                create_inst_typed I_pair;
              ]);
     }
@@ -2850,21 +3150,24 @@ let create_contract_tests =
 
 let unpack_ok () =
   let stack = create_stack () in
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Bytes);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_unpack (create_typ T_int))
-    ~actual:(type_unpack dummy_loc stack (create_typ T_int));
-  Alcotest.(check (option typ)) "stack" (Some (Option Int)) (Stack.pop stack);
+    ~expected:(I_unpack (create_adt_typ T_int))
+    ~actual:(type_unpack dummy_loc stack (create_adt_typ T_int));
+  Alcotest.(check (option typ))
+    "stack"
+    (Some (create_typ (Option (create_typ Int))))
+    (Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let unpack_nok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
-      let _ = type_unpack dummy_loc stack (create_typ T_bytes) in
+      let _ = type_unpack dummy_loc stack (create_adt_typ T_bytes) in
       false
     with Type_error _ -> true
   in
@@ -2881,13 +3184,15 @@ let unpack_tests =
 
 let cast_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_cast (create_typ T_int))
-    ~actual:(type_cast dummy_loc stack (create_typ T_int));
+    ~expected:(I_cast (create_adt_typ T_int))
+    ~actual:(type_cast dummy_loc stack (create_adt_typ T_int));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -2897,26 +3202,30 @@ let cast_tests = Alcotest.[ test_case "cast_ok" `Quick cast_ok ]
 
 let create_account_ok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Bool;
-  Stack.push stack (Option Key_hash);
-  Stack.push stack Key_hash;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ (Option (create_typ Key_hash)));
+  Stack.push stack (create_typ Key_hash);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_create_account
     ~actual:(type_create_account dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Operation) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Operation))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Address) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Address))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let create_account_nok () =
   let stack = create_stack () in
-  Stack.push stack Mutez;
-  Stack.push stack Bool;
-  Stack.push stack (Option Key_hash);
-  Stack.push stack Int;
+  Stack.push stack (create_typ Mutez);
+  Stack.push stack (create_typ Bool);
+  Stack.push stack (create_typ (Option (create_typ Key_hash)));
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_create_account dummy_loc stack in
@@ -2936,20 +3245,22 @@ let create_account_tests =
 
 let exec_ok () =
   let stack = create_stack () in
-  Stack.push stack (Lambda (Int, Nat));
-  Stack.push stack Int;
+  Stack.push stack (create_typ (Lambda (create_typ Int, create_typ Nat)));
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_exec
     ~actual:(type_exec dummy_loc stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let exec_nok () =
   let stack = create_stack () in
-  Stack.push stack (Lambda (Int, Nat));
-  Stack.push stack Nat;
+  Stack.push stack (create_typ (Lambda (create_typ Int, create_typ Nat)));
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_exec dummy_loc stack in
@@ -2966,22 +3277,28 @@ let exec_tests =
 
 let apply_ok () =
   let stack = create_stack () in
-  Stack.push stack (Lambda (Pair (Nat, Int), String));
-  Stack.push stack Nat;
+  Stack.push stack
+    (create_typ
+       (Lambda
+          (create_typ (Pair (create_typ Nat, create_typ Int)), create_typ String)));
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:I_apply
     ~actual:(type_apply dummy_loc stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Lambda (Int, String)))
+    ~expected:(Some (create_typ (Lambda (create_typ Int, create_typ String))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let apply_nok () =
   let stack = create_stack () in
-  Stack.push stack (Lambda (Pair (Nat, Int), String));
-  Stack.push stack Int;
+  Stack.push stack
+    (create_typ
+       (Lambda
+          (create_typ (Pair (create_typ Nat, create_typ Int)), create_typ String)));
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_apply dummy_loc stack in
@@ -3001,18 +3318,20 @@ let apply_tests =
 
 let drop_0_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_drop Bigint.zero)
     ~actual:(type_drop_n dummy_loc stack Bigint.zero);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let drop_1_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_drop Bigint.one)
     ~actual:(type_drop_n dummy_loc stack Bigint.one);
@@ -3021,8 +3340,8 @@ let drop_1_ok () =
 
 let drop_2_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_drop Bigint.(one + one))
@@ -3044,12 +3363,14 @@ let push_ok () =
   let stack = create_stack () in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_push (create_data (create_typ T_int) (D_int Bigint.zero)))
+    ~expected:(I_push (create_data (create_adt_typ T_int) (D_int Bigint.zero)))
     ~actual:
       (type_push dummy_loc stack
-         (create_data (create_typ T_int) (D_int Bigint.zero)));
+         (create_data (create_adt_typ T_int) (D_int Bigint.zero)));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -3059,14 +3380,14 @@ let push_tests = Alcotest.[ test_case "push_ok" `Quick push_ok ]
 
 let left_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_left (create_typ T_nat))
-    ~actual:(type_left dummy_loc stack (create_typ T_nat));
+    ~expected:(I_left (create_adt_typ T_nat))
+    ~actual:(type_left dummy_loc stack (create_adt_typ T_nat));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Or (Int, Nat)))
+    ~expected:(Some (create_typ (Or (create_typ Int, create_typ Nat))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -3077,14 +3398,14 @@ let left_tests = Alcotest.[ test_case "left_ok" `Quick left_ok ]
 
 let right_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_right (create_typ T_nat))
-    ~actual:(type_right dummy_loc stack (create_typ T_nat));
+    ~expected:(I_right (create_adt_typ T_nat))
+    ~actual:(type_right dummy_loc stack (create_adt_typ T_nat));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Or (Nat, Int)))
+    ~expected:(Some (create_typ (Or (create_typ Nat, create_typ Int))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -3095,41 +3416,83 @@ let right_tests = Alcotest.[ test_case "right_ok" `Quick right_ok ]
 
 let unpair_2_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Int, Pair (Nat, Pair (String, Pair (Bool, Bytes)))));
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Int,
+            create_typ
+              (Pair
+                 ( create_typ Nat,
+                   create_typ
+                     (Pair
+                        ( create_typ String,
+                          create_typ (Pair (create_typ Bool, create_typ Bytes))
+                        )) )) )));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_unpair Bigint.(one + one))
     ~actual:(type_unpair dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Nat, Pair (String, Pair (Bool, Bytes)))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ Nat,
+                 create_typ
+                   (Pair
+                      ( create_typ String,
+                        create_typ (Pair (create_typ Bool, create_typ Bytes)) ))
+               ))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let unpair_3_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Int, Pair (Nat, Pair (String, Pair (Bool, Bytes)))));
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Int,
+            create_typ
+              (Pair
+                 ( create_typ Nat,
+                   create_typ
+                     (Pair
+                        ( create_typ String,
+                          create_typ (Pair (create_typ Bool, create_typ Bytes))
+                        )) )) )));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_unpair Bigint.(one + one + one))
     ~actual:(type_unpair dummy_loc stack Bigint.(one + one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (String, Pair (Bool, Bytes))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ String,
+                 create_typ (Pair (create_typ Bool, create_typ Bytes)) ))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let unpair_nok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Int, Nat));
+  Stack.push stack (create_typ (Pair (create_typ Int, create_typ Nat)));
   let error =
     try
       let _ = type_unpair dummy_loc stack Bigint.(one + one + one) in
@@ -3140,7 +3503,7 @@ let unpair_nok () =
 
 let unpair_nok2 () =
   let stack = create_stack () in
-  Stack.push stack Int;
+  Stack.push stack (create_typ Int);
   let error =
     try
       let _ = type_unpair dummy_loc stack Bigint.(one + one) in
@@ -3162,57 +3525,79 @@ let unpair_tests =
 
 let dup_1_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
-    ~msg:"instruction" ~expected:(I_dup_n Bigint.one)
-    ~actual:(type_dup_n dummy_loc stack Bigint.one);
+    ~msg:"instruction" ~expected:(I_dup Bigint.one)
+    ~actual:(type_dup dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dup_2_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_dup_n Bigint.(one + one))
-    ~actual:(type_dup_n dummy_loc stack Bigint.(one + one));
+    ~expected:(I_dup Bigint.(one + one))
+    ~actual:(type_dup dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dup_3_ok () =
   let stack = create_stack () in
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
-    ~expected:(I_dup_n Bigint.(one + one))
-    ~actual:(type_dup_n dummy_loc stack Bigint.(one + one));
+    ~expected:(I_dup Bigint.(one + one))
+    ~actual:(type_dup dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -3228,53 +3613,71 @@ let dup_n_tests =
 
 let dig_0_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_dig Bigint.zero)
     ~actual:(type_dig dummy_loc stack Bigint.zero);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dig_1_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_dig Bigint.one)
     ~actual:(type_dig dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dig_2_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dig Bigint.(one + one))
     ~actual:(type_dig dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -3290,53 +3693,71 @@ let dig_tests =
 
 let dug_0_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_dug Bigint.zero)
     ~actual:(type_dug dummy_loc stack Bigint.zero);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dug_1_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_dug Bigint.one)
     ~actual:(type_dug dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dug_2_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dug Bigint.(one + one))
     ~actual:(type_dug dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -3352,27 +3773,29 @@ let dug_tests =
 
 let pair_n_2_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_pair_n Bigint.(one + one))
     ~actual:(type_pair_n dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Nat, Int)))
+    ~expected:(Some (create_typ (Pair (create_typ Nat, create_typ Int))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let pair_n_3_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_pair_n Bigint.(one + one + one))
@@ -3380,7 +3803,12 @@ let pair_n_3_ok () =
 
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Nat, Pair (Int, String))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ Nat,
+                 create_typ (Pair (create_typ Int, create_typ String)) ))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -3396,67 +3824,87 @@ let pair_n_tests =
 
 let get_0_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_get_n Bigint.zero)
     ~actual:(type_get_n dummy_loc stack Bigint.zero);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_1_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Nat, Pair (Int, String)));
+  Stack.push stack
+    (create_typ
+       (Pair
+          (create_typ Nat, create_typ (Pair (create_typ Int, create_typ String)))));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_get_n Bigint.one)
     ~actual:(type_get_n dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_2_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Nat, Pair (Int, String)));
+  Stack.push stack
+    (create_typ
+       (Pair
+          (create_typ Nat, create_typ (Pair (create_typ Int, create_typ String)))));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_get_n Bigint.(one + one))
     ~actual:(type_get_n dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Int, String)))
+    ~expected:(Some (create_typ (Pair (create_typ Int, create_typ String))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_3_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Nat, Pair (Int, String)));
+  Stack.push stack
+    (create_typ
+       (Pair
+          (create_typ Nat, create_typ (Pair (create_typ Int, create_typ String)))));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_get_n Bigint.(one + one + one))
     ~actual:(type_get_n dummy_loc stack Bigint.(one + one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_4_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Nat, Pair (Int, String)));
+  Stack.push stack
+    (create_typ
+       (Pair
+          (create_typ Nat, create_typ (Pair (create_typ Int, create_typ String)))));
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_get_n Bigint.(one + one + one + one))
     ~actual:(type_get_n dummy_loc stack Bigint.(one + one + one + one));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let get_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ = type_get_n dummy_loc stack Bigint.one in
@@ -3480,80 +3928,117 @@ let get_n_tests =
 
 let update_0_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_update_n Bigint.zero)
     ~actual:(type_update_n dummy_loc stack Bigint.zero);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
 
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_1_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Bool, Pair (Int, String)));
-  Stack.push stack Nat;
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Bool,
+            create_typ (Pair (create_typ Int, create_typ String)) )));
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:(I_update_n Bigint.one)
     ~actual:(type_update_n dummy_loc stack Bigint.one);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Nat, Pair (Int, String))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ Nat,
+                 create_typ (Pair (create_typ Int, create_typ String)) ))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_2_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Bool, Pair (Int, String)));
-  Stack.push stack Nat;
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Bool,
+            create_typ (Pair (create_typ Int, create_typ String)) )));
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_update_n Bigint.(one + one))
     ~actual:(type_update_n dummy_loc stack Bigint.(one + one));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Bool, Nat)))
+    ~expected:(Some (create_typ (Pair (create_typ Bool, create_typ Nat))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_3_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Bool, Pair (Int, String)));
-  Stack.push stack Nat;
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Bool,
+            create_typ (Pair (create_typ Int, create_typ String)) )));
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_update_n Bigint.(one + one + one))
     ~actual:(type_update_n dummy_loc stack Bigint.(one + one + one));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Bool, Pair (Nat, String))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ Bool,
+                 create_typ (Pair (create_typ Nat, create_typ String)) ))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_4_ok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Bool, Pair (Int, String)));
-  Stack.push stack Nat;
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Bool,
+            create_typ (Pair (create_typ Int, create_typ String)) )));
+  Stack.push stack (create_typ Nat);
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_update_n Bigint.(one + one + one + one))
     ~actual:(type_update_n dummy_loc stack Bigint.(one + one + one + one));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Pair (Bool, Pair (Int, Nat))))
+    ~expected:
+      (Some
+         (create_typ
+            (Pair
+               ( create_typ Bool,
+                 create_typ (Pair (create_typ Int, create_typ Nat)) ))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let update_nok () =
   let stack = create_stack () in
-  Stack.push stack (Pair (Bool, Pair (Int, String)));
-  Stack.push stack Nat;
+  Stack.push stack
+    (create_typ
+       (Pair
+          ( create_typ Bool,
+            create_typ (Pair (create_typ Int, create_typ String)) )));
+  Stack.push stack (create_typ Nat);
   let error =
     try
       let _ =
@@ -3579,11 +4064,11 @@ let update_n_tests =
 
 let seq_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   let i =
     create_inst
       (I_seq [ create_inst I_add; create_inst I_mul; create_inst I_slice ])
@@ -3598,9 +4083,11 @@ let seq_ok () =
   in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:i_typed
-    ~actual:(fst (snd (type_inst (create_typ T_unit) stack i)).value);
+    ~actual:(fst (snd (type_inst (create_adt_typ T_unit) stack i)).value);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some (Option String)) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ (Option (create_typ String))))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -3610,10 +4097,10 @@ let seq_tests = Alcotest.[ test_case "seq_ok" `Quick seq_ok ]
 
 let if_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Bool);
   let i_t = create_inst Adt.I_add in
   let i_f =
     create_inst (Adt.I_seq [ create_inst Adt.I_swap; create_inst Adt.I_drop ])
@@ -3630,26 +4117,30 @@ let if_ok () =
                   create_inst_typed I_swap;
                   create_inst_typed (I_drop Bigint.one);
                 ]) ))
-    ~actual:(snd (type_if dummy_loc (create_typ T_unit) stack i_t i_f));
+    ~actual:(snd (type_if dummy_loc (create_adt_typ T_unit) stack i_t i_f));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let if_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   let i_t = create_inst Adt.I_add in
   let i_f =
     create_inst (Adt.I_seq [ create_inst Adt.I_swap; create_inst Adt.I_drop ])
   in
   let error =
     try
-      let _ = type_if dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3657,15 +4148,15 @@ let if_nok () =
 
 let if_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Bool);
   let i_t = create_inst Adt.I_add in
   let i_f = create_inst Adt.I_swap in
   let error =
     try
-      let _ = type_if dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3673,15 +4164,15 @@ let if_nok2 () =
 
 let if_nok3 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Bool);
   let i_t = create_inst Adt.I_add in
   let i_f = create_inst Adt.I_drop in
   let error =
     try
-      let _ = type_if dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3700,9 +4191,9 @@ let if_tests =
 
 let if_none_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack (Option Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ (Option (create_typ Nat)));
   let i_t =
     create_inst (Adt.I_seq [ create_inst Adt.I_drop; create_inst Adt.I_some ])
   in
@@ -3718,25 +4209,26 @@ let if_none_ok () =
                   create_inst_typed I_some;
                 ]),
            create_inst_typed I_slice_string ))
-    ~actual:(snd (type_if_none dummy_loc (create_typ T_unit) stack i_t i_f));
+    ~actual:(snd (type_if_none dummy_loc (create_adt_typ T_unit) stack i_t i_f));
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (Option String))
+    ~msg:"stack value"
+    ~expected:(Some (create_typ (Option (create_typ String))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let if_none_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Nat);
   let i_t =
     create_inst (Adt.I_seq [ create_inst Adt.I_drop; create_inst Adt.I_some ])
   in
   let i_f = create_inst Adt.I_slice in
   let error =
     try
-      let _ = type_if_none dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if_none dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3744,14 +4236,14 @@ let if_none_nok () =
 
 let if_none_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
-  Stack.push stack (Option Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ (Option (create_typ Nat)));
   let i_t = create_inst Adt.I_drop in
   let i_f = create_inst Adt.I_slice in
   let error =
     try
-      let _ = type_if_none dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if_none dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3769,8 +4261,9 @@ let if_none_tests =
 
 let if_left_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (Or (List String, String));
+  Stack.push stack (create_typ String);
+  Stack.push stack
+    (create_typ (Or (create_typ (List (create_typ String)), create_typ String)));
   let i_t =
     create_inst
       (Adt.I_seq [ create_inst Adt.I_concat; create_inst Adt.I_concat ])
@@ -3787,16 +4280,18 @@ let if_left_ok () =
                   create_inst_typed I_concat_string;
                 ]),
            create_inst_typed I_concat_string ))
-    ~actual:(snd (type_if_left dummy_loc (create_typ T_unit) stack i_t i_f));
+    ~actual:(snd (type_if_left dummy_loc (create_adt_typ T_unit) stack i_t i_f));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let if_left_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (List String);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ (List (create_typ String)));
   let i_t =
     create_inst
       (Adt.I_seq [ create_inst Adt.I_concat; create_inst Adt.I_concat ])
@@ -3804,7 +4299,7 @@ let if_left_nok () =
   let i_f = create_inst Adt.I_concat in
   let error =
     try
-      let _ = type_if_left dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if_left dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3812,13 +4307,14 @@ let if_left_nok () =
 
 let if_left_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (Or (List String, String));
+  Stack.push stack (create_typ String);
+  Stack.push stack
+    (create_typ (Or (create_typ (List (create_typ String)), create_typ String)));
   let i_t = create_inst Adt.I_concat in
   let i_f = create_inst Adt.I_concat in
   let error =
     try
-      let _ = type_if_left dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if_left dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3836,8 +4332,8 @@ let if_left_tests =
 
 let if_cons_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (List String);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ (List (create_typ String)));
   let i_t =
     create_inst
       (Adt.I_seq
@@ -3862,16 +4358,18 @@ let if_cons_ok () =
                   create_inst_typed I_concat_string;
                 ]),
            create_inst_typed I_noop ))
-    ~actual:(snd (type_if_cons dummy_loc (create_typ T_unit) stack i_t i_f));
+    ~actual:(snd (type_if_cons dummy_loc (create_adt_typ T_unit) stack i_t i_f));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let if_cons_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack String;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ String);
   let i_t =
     create_inst
       (Adt.I_seq
@@ -3885,7 +4383,7 @@ let if_cons_nok () =
   let i_f = create_inst Adt.I_noop in
   let error =
     try
-      let _ = type_if_cons dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if_cons dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3893,8 +4391,8 @@ let if_cons_nok () =
 
 let if_cons_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (List String);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ (List (create_typ String)));
   let i_t =
     create_inst
       (Adt.I_seq
@@ -3907,7 +4405,7 @@ let if_cons_nok2 () =
   let i_f = create_inst Adt.I_noop in
   let error =
     try
-      let _ = type_if_cons dummy_loc (create_typ T_unit) stack i_t i_f in
+      let _ = type_if_cons dummy_loc (create_adt_typ T_unit) stack i_t i_f in
       false
     with Type_error _ -> true
   in
@@ -3925,13 +4423,13 @@ let if_cons_tests =
 
 let loop_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Bool);
   let i =
     create_inst
       (Adt.I_seq
          [
-           create_inst Adt.I_dup;
+           create_inst (Adt.I_dup Bigint.one);
            create_inst Adt.I_level;
            create_inst Adt.I_compare;
            create_inst Adt.I_eq;
@@ -3944,27 +4442,29 @@ let loop_ok () =
          (create_inst_typed
             (I_seq
                [
-                 create_inst_typed I_dup;
+                 create_inst_typed (I_dup Bigint.one);
                  create_inst_typed I_level;
                  create_inst_typed I_compare;
                  create_inst_typed I_eq;
                ])))
-    ~actual:(snd (type_loop dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_loop dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Nat) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Nat))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let loop_nok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack String;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ String);
   let i =
     create_inst (Adt.I_seq [ create_inst Adt.I_level; create_inst Adt.I_add ])
   in
   let error =
     try
-      let _ = type_loop dummy_loc (create_typ T_unit) stack i in
+      let _ = type_loop dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -3972,12 +4472,12 @@ let loop_nok () =
 
 let loop_nok2 () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Bool;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Bool);
   let i = create_inst Adt.I_level in
   let error =
     try
-      let _ = type_loop dummy_loc (create_typ T_unit) stack i in
+      let _ = type_loop dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -3995,8 +4495,8 @@ let loop_tests =
 
 let loop_left_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (Or (Nat, Timestamp));
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ (Or (create_typ Nat, create_typ Timestamp)));
   let i =
     create_inst
       (Adt.I_seq
@@ -4010,13 +4510,13 @@ let loop_left_ok () =
                     (Adt.I_seq
                        [
                          create_inst Adt.I_level;
-                         create_inst (Adt.I_left (create_typ T_timestamp));
+                         create_inst (Adt.I_left (create_adt_typ T_timestamp));
                        ]),
                   create_inst
                     (Adt.I_seq
                        [
                          create_inst Adt.I_now;
-                         create_inst (Adt.I_right (create_typ T_nat));
+                         create_inst (Adt.I_right (create_adt_typ T_nat));
                        ]) ));
          ])
   in
@@ -4034,30 +4534,35 @@ let loop_left_ok () =
                        (I_seq
                           [
                             create_inst_typed I_level;
-                            create_inst_typed (I_left (create_typ T_timestamp));
+                            create_inst_typed
+                              (I_left (create_adt_typ T_timestamp));
                           ]),
                      create_inst_typed
                        (I_seq
                           [
                             create_inst_typed I_now;
-                            create_inst_typed (I_right (create_typ T_nat));
+                            create_inst_typed (I_right (create_adt_typ T_nat));
                           ]) ));
             ]))
   in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction" ~expected:i_typed
-    ~actual:(snd (type_loop_left dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_loop_left dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Timestamp) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Timestamp))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let loop_left_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Nat);
   let i =
     create_inst
       (Adt.I_seq
@@ -4071,19 +4576,19 @@ let loop_left_nok () =
                     (Adt.I_seq
                        [
                          create_inst Adt.I_level;
-                         create_inst (Adt.I_left (create_typ T_timestamp));
+                         create_inst (Adt.I_left (create_adt_typ T_timestamp));
                        ]),
                   create_inst
                     (Adt.I_seq
                        [
                          create_inst Adt.I_now;
-                         create_inst (Adt.I_right (create_typ T_nat));
+                         create_inst (Adt.I_right (create_adt_typ T_nat));
                        ]) ));
          ])
   in
   let error =
     try
-      let _ = type_loop_left dummy_loc (create_typ T_unit) stack i in
+      let _ = type_loop_left dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -4091,8 +4596,8 @@ let loop_left_nok () =
 
 let loop_left_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack (Or (Nat, Timestamp));
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ (Or (create_typ Nat, create_typ Timestamp)));
   let i =
     create_inst
       (Adt.I_seq
@@ -4106,19 +4611,19 @@ let loop_left_nok2 () =
                     (Adt.I_seq
                        [
                          create_inst Adt.I_level;
-                         create_inst (Adt.I_left (create_typ T_string));
+                         create_inst (Adt.I_left (create_adt_typ T_string));
                        ]),
                   create_inst
                     (Adt.I_seq
                        [
                          create_inst Adt.I_now;
-                         create_inst (Adt.I_right (create_typ T_nat));
+                         create_inst (Adt.I_right (create_adt_typ T_nat));
                        ]) ));
          ])
   in
   let error =
     try
-      let _ = type_loop_left dummy_loc (create_typ T_unit) stack i in
+      let _ = type_loop_left dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -4136,43 +4641,51 @@ let loop_left_tests =
 
 let iter_list_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (List Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (List (create_typ Nat)));
   let i = create_inst Adt.I_add in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_iter_list (create_inst_typed I_add_nat_int))
-    ~actual:(snd (type_iter dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_iter dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let iter_set_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (Set Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (Set (create_typ Nat)));
   let i = create_inst Adt.I_add in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_iter_set (create_inst_typed I_add_nat_int))
-    ~actual:(snd (type_iter dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_iter dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let iter_map_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (Map (Nat, Int));
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (Map (create_typ Nat, create_typ Int)));
   let i =
     create_inst
       (Adt.I_seq
@@ -4193,25 +4706,29 @@ let iter_map_ok () =
                  create_inst_typed I_add_nat_int;
                  create_inst_typed I_add_int;
                ])))
-    ~actual:(snd (type_iter dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_iter dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let iter_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (List Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (List (create_typ Nat)));
   let i =
     create_inst (Adt.I_seq [ create_inst Adt.I_add; create_inst Adt.I_drop ])
   in
   let error =
     try
-      let _ = type_iter dummy_loc (create_typ T_unit) stack i in
+      let _ = type_iter dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -4219,15 +4736,15 @@ let iter_nok () =
 
 let iter_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack Nat;
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ Nat);
   let i =
     create_inst (Adt.I_seq [ create_inst Adt.I_add; create_inst Adt.I_drop ])
   in
   let error =
     try
-      let _ = type_iter dummy_loc (create_typ T_unit) stack i in
+      let _ = type_iter dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -4247,9 +4764,9 @@ let iter_tests =
 
 let map_list_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (List Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (List (create_typ Nat)));
   let i =
     create_inst (Adt.I_seq [ create_inst Adt.I_drop; create_inst Adt.I_now ])
   in
@@ -4262,22 +4779,27 @@ let map_list_ok () =
                [
                  create_inst_typed (I_drop Bigint.one); create_inst_typed I_now;
                ])))
-    ~actual:(snd (type_map dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_map dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack value" ~expected:(Some (List Timestamp))
+    ~msg:"stack value"
+    ~expected:(Some (create_typ (List (create_typ Timestamp))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let map_map_ok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (Map (Nat, Bool));
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (Map (create_typ Nat, create_typ Bool)));
   let i =
     create_inst (Adt.I_seq [ create_inst Adt.I_drop; create_inst Adt.I_now ])
   in
@@ -4290,29 +4812,33 @@ let map_map_ok () =
                [
                  create_inst_typed (I_drop Bigint.one); create_inst_typed I_now;
                ])))
-    ~actual:(snd (type_map dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_map dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Map (Nat, Timestamp)))
+    ~expected:(Some (create_typ (Map (create_typ Nat, create_typ Timestamp))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let map_nok () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (Set Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (Set (create_typ Nat)));
   let i =
     create_inst (Adt.I_seq [ create_inst Adt.I_drop; create_inst Adt.I_now ])
   in
   let error =
     try
-      let _ = type_map dummy_loc (create_typ T_unit) stack i in
+      let _ = type_map dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -4320,13 +4846,13 @@ let map_nok () =
 
 let map_nok2 () =
   let stack = create_stack () in
-  Stack.push stack String;
-  Stack.push stack Int;
-  Stack.push stack (List Nat);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ (List (create_typ Nat)));
   let i = create_inst Adt.I_drop in
   let error =
     try
-      let _ = type_map dummy_loc (create_typ T_unit) stack i in
+      let _ = type_map dummy_loc (create_adt_typ T_unit) stack i in
       false
     with Type_error _ -> true
   in
@@ -4353,16 +4879,17 @@ let lambda_ok () =
     ~msg:"instruction"
     ~expected:
       (I_lambda
-         ( create_typ T_nat,
-           create_typ T_int,
+         ( create_adt_typ T_nat,
+           create_adt_typ T_int,
            create_inst_typed
              (I_seq [ create_inst_typed I_level; create_inst_typed I_compare ])
          ))
     ~actual:
-      (type_lambda dummy_loc stack (create_typ T_nat) (create_typ T_int) i);
+      (type_lambda dummy_loc stack (create_adt_typ T_nat) (create_adt_typ T_int)
+         i);
   Alcotest.(check' (option typ))
     ~msg:"stack value"
-    ~expected:(Some (Lambda (Nat, Int)))
+    ~expected:(Some (create_typ (Lambda (create_typ Nat, create_typ Int))))
     ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
@@ -4373,7 +4900,8 @@ let lambda_nok () =
   let error =
     try
       let _ =
-        type_lambda dummy_loc stack (create_typ T_nat) (create_typ T_int) i
+        type_lambda dummy_loc stack (create_adt_typ T_nat)
+          (create_adt_typ T_int) i
       in
       false
     with Type_error _ -> true
@@ -4389,7 +4917,8 @@ let lambda_nok2 () =
   let error =
     try
       let _ =
-        type_lambda dummy_loc stack (create_typ T_nat) (create_typ T_string) i
+        type_lambda dummy_loc stack (create_adt_typ T_nat)
+          (create_adt_typ T_string) i
       in
       false
     with Type_error _ -> true
@@ -4405,7 +4934,8 @@ let lambda_nok3 () =
   let error =
     try
       let _ =
-        type_lambda dummy_loc stack (create_typ T_string) (create_typ T_int) i
+        type_lambda dummy_loc stack (create_adt_typ T_string)
+          (create_adt_typ T_int) i
       in
       false
     with Type_error _ -> true
@@ -4425,18 +4955,22 @@ let lambda_tests =
 
 let dip_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack String;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
   let i = create_inst Adt.I_add in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dip (create_inst_typed I_add_nat_int))
-    ~actual:(snd (type_dip dummy_loc (create_typ T_unit) stack i));
+    ~actual:(snd (type_dip dummy_loc (create_adt_typ T_unit) stack i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
@@ -4446,79 +4980,103 @@ let dip_tests = Alcotest.[ test_case "dip_ok" `Quick dip_ok ]
 
 let dip_0_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
   let i = create_inst Adt.I_add in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dip_n (Bigint.zero, create_inst_typed I_add_nat_int))
-    ~actual:(snd (type_dip_n dummy_loc (create_typ T_unit) stack Bigint.zero i));
+    ~actual:
+      (snd (type_dip_n dummy_loc (create_adt_typ T_unit) stack Bigint.zero i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dip_1_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack String;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
   let i = create_inst Adt.I_add in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dip_n (Bigint.one, create_inst_typed I_add_nat_int))
-    ~actual:(snd (type_dip_n dummy_loc (create_typ T_unit) stack Bigint.one i));
+    ~actual:
+      (snd (type_dip_n dummy_loc (create_adt_typ T_unit) stack Bigint.one i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dip_2_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack String;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
   let i = create_inst Adt.I_int in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dip_n (Bigint.(one + one), create_inst_typed I_int_nat))
     ~actual:
       (snd
-         (type_dip_n dummy_loc (create_typ T_unit) stack Bigint.(one + one) i));
+         (type_dip_n dummy_loc (create_adt_typ T_unit) stack
+            Bigint.(one + one)
+            i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 
 let dip_3_ok () =
   let stack = create_stack () in
-  Stack.push stack Nat;
-  Stack.push stack Int;
-  Stack.push stack String;
-  Stack.push stack Bytes;
+  Stack.push stack (create_typ Nat);
+  Stack.push stack (create_typ Int);
+  Stack.push stack (create_typ String);
+  Stack.push stack (create_typ Bytes);
   let i = create_inst I_int in
   Alcotest.(check' inst_t_typed)
     ~msg:"instruction"
     ~expected:(I_dip_n (Bigint.(one + one + one), create_inst_typed I_int_nat))
     ~actual:
       (snd
-         (type_dip_n dummy_loc (create_typ T_unit) stack
+         (type_dip_n dummy_loc (create_adt_typ T_unit) stack
             Bigint.(one + one + one)
             i));
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Bytes) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Bytes))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some String) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ String))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' (option typ))
-    ~msg:"stack" ~expected:(Some Int) ~actual:(Stack.pop stack);
+    ~msg:"stack"
+    ~expected:(Some (create_typ Int))
+    ~actual:(Stack.pop stack);
   Alcotest.(check' bool)
     ~msg:"empty stack" ~expected:true ~actual:(Stack.is_empty stack)
 

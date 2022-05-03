@@ -53,8 +53,7 @@ type inst_t =
   | I_apply
   | I_drop
   | I_drop_n of Bigint.t
-  | I_dup
-  | I_dup_n of Bigint.t
+  | I_dup of Bigint.t
   | I_swap
   | I_dig of Bigint.t
   | I_dug of Bigint.t
@@ -177,6 +176,7 @@ module Typ : sig
   include Sexpable.S with type t := t
 
   val create : int -> ?location:Loc.t -> ?annots:annot list -> typ_t -> t
+  val has_annot : Common_adt.Annot.t -> t -> bool
 end
 
 module Data : sig

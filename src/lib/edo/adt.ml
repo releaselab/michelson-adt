@@ -52,8 +52,7 @@ type inst_t =
   | I_apply
   | I_drop
   | I_drop_n of Bigint.t
-  | I_dup
-  | I_dup_n of Bigint.t
+  | I_dup of Bigint.t
   | I_swap
   | I_dig of Bigint.t
   | I_dug of Bigint.t
@@ -179,6 +178,9 @@ module Typ = struct
 
   let create id ?(location = Common_adt.Loc.dummy_loc) ?(annots = []) t =
     Common_adt.Node.create id ~location (t, annots)
+
+  let has_annot a t =
+    List.mem (snd t.Common_adt.Node.value) a ~equal:Common_adt.Annot.equal
 end
 
 module Data = struct

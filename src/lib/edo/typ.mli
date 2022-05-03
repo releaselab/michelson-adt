@@ -1,6 +1,6 @@
 open! Core
 
-type t =
+type t' =
   | Unit
   | Never
   | Bool
@@ -34,10 +34,14 @@ type t =
   | Chest
   | Chest_key
 
+and t = t' * Common_adt.Annot.t list
+
 include Comparable.S with type t := t
 include Sexpable.S with type t := t
 
 val is_comparable_type : t -> bool
 val is_packable : t -> bool
 val is_contract_type_compatible : t -> t -> bool
+val t'_to_string : t' -> string
 val to_string : t -> string
+val has_annot : Common_adt.Annot.t -> t -> bool

@@ -62,7 +62,6 @@ and pp_inst ppf i =
   | I_rename -> fprintf ppf "RENAME"
   | I_abs -> fprintf ppf "ABS"
   | I_drop -> fprintf ppf "DROP"
-  | I_dup -> fprintf ppf "DUP"
   | I_swap -> fprintf ppf "SWAP"
   | I_some -> fprintf ppf "SOME"
   | I_unit -> fprintf ppf "UNIT"
@@ -166,7 +165,7 @@ and pp_inst ppf i =
   | I_read_ticket -> fprintf ppf "READ_TICKET"
   | I_split_ticket -> fprintf ppf "SPLIT_TICKET"
   | I_join_tickets -> fprintf ppf "JOIN_TICKETS"
-  | I_dup_n n -> fprintf ppf "DUP %a" Bigint.pp n
+  | I_dup n -> fprintf ppf "DUP %a" Bigint.pp n
   | I_pair_n n -> fprintf ppf "PAIR %a" Bigint.pp n
   | I_unpair_n n -> fprintf ppf "UNPAIR %a" Bigint.pp n
   | I_get_n n -> fprintf ppf "GET %a" Bigint.pp n

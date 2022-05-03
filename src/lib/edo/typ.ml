@@ -1,7 +1,18 @@
 open! Core
 
 module T = struct
-  type t =
+  let compare_annot_list a b =
+    let f = function Common_adt.Annot.A_type _ -> true | _ -> false in
+    if List.is_empty a && List.is_empty b then 0
+    else if List.is_empty a && not (List.exists b ~f) then 0
+    else if (not (List.exists a ~f)) && List.is_empty b then 0
+    else
+      let f = function Common_adt.Annot.A_type a -> Some a | _ -> None in
+      match (List.find_map a ~f, List.find_map b ~f) with
+      | None, None | None, Some _ | Some _, None -> 0
+      | Some a, Some b -> String.compare a b
+
+  type t' =
     | Unit
     | Never
     | Bool
@@ -34,13 +45,17 @@ module T = struct
     | Sapling_state of Bigint.t
     | Chest
     | Chest_key
+
+  and t =
+    t' * (Common_adt.Annot.t list[@compare fun a b -> compare_annot_list a b])
   [@@deriving ord, sexp]
 end
 
 include T
 include Comparable.Make (T)
 
-let rec is_comparable_type = function
+let rec is_comparable_type (t, _) =
+  match t with
   | Address | Bool | Bytes | Chain_id | Int | Key | Key_hash | Mutez | Nat
   | Never | Unit | String | Signature | Timestamp ->
       true
@@ -49,7 +64,8 @@ let rec is_comparable_type = function
   | Pair (t_1, t_2) -> is_comparable_type t_1 && is_comparable_type t_2
   | _ -> false
 
-let rec is_packable = function
+let rec is_packable (t, _) =
+  match t with
   | Address | Bls12_381_fr | Bls12_381_g1 | Bls12_381_g2 | Bool | Bytes
   | Contract _ | Int | Key | Key_hash | Lambda _ | Mutez | Nat | Never
   | Sapling_transaction _ | Signature | String | Timestamp | Unit | Chain_id ->
@@ -62,7 +78,7 @@ let rec is_packable = function
       false
 
 let rec is_contract_type_compatible contract_t t =
-  match (contract_t, t) with
+  match (fst contract_t, fst t) with
   | _ when contract_t = t -> true
   | Pair (contract_1, contract_2), Pair (t_1, t_2) ->
       is_contract_type_compatible contract_1 t_1
@@ -73,7 +89,7 @@ let rec is_contract_type_compatible contract_t t =
       is_contract_type_compatible c t || is_contract_type_compatible t c
   | _ -> false
 
-let rec to_string = function
+let rec t'_to_string = function
   | Int -> sprintf "int"
   | Nat -> sprintf "nat"
   | String -> sprintf "string"
@@ -109,3 +125,7 @@ let rec to_string = function
   | Sapling_state n -> sprintf "sapling_state %s" (Bigint.to_string n)
   | Chest -> sprintf "chest"
   | Chest_key -> sprintf "chest_key"
+
+and to_string (t, _) = t'_to_string t
+
+let has_annot a t = List.mem (snd t) a ~equal:Common_adt.Annot.equal

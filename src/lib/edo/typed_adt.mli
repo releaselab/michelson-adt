@@ -59,8 +59,7 @@ and inst_t =
   | I_dip_n of Bigint.t * inst
   | I_drop of Bigint.t
   | I_dug of Bigint.t
-  | I_dup
-  | I_dup_n of Bigint.t
+  | I_dup of Bigint.t
   | I_ediv_nat
   | I_ediv_nat_int
   | I_ediv_int
@@ -174,7 +173,6 @@ and inst_t =
   | I_update_map
   | I_update_big_map
   | I_update_n of Bigint.t
-  | I_update_n_pair of Bigint.t
   | I_voting_power
   | I_xor_bool
   | I_xor_nat
